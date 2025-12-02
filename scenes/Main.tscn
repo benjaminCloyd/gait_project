@@ -3,7 +3,7 @@
 [ext_resource type="PackedScene" uid="uid://buopsyna4ftlc" path="res://scenes/Player.tscn" id="1_524sx"]
 [ext_resource type="Texture2D" uid="uid://dj15rdd7upt2m" path="res://Sprites/TempTileset.png" id="2_5pfvy"]
 [ext_resource type="AudioStream" uid="uid://bufkjlnwgvlog" path="res://Sounds/Background Main.mp3" id="3_rarhs"]
-[ext_resource type="Script" uid="uid://ctbdtdjtquum1" path="res://scenes/audio_stream_player.gd" id="4_vcsgt"]
+[ext_resource type="Script" uid="uid://ctbdtdjtquum1" path="res://scripts/audio_stream_player.gd" id="4_vcsgt"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_l1ug0"]
 texture = ExtResource("2_5pfvy")

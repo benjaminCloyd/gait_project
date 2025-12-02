@@ -1,0 +1,8 @@
+[gd_scene load_steps=2 format=3 uid="uid://bhyqmt2lyshj"]
+
+[ext_resource type="Script" uid="uid://bu2mfrg4q3fjo" path="res://scripts/API.gd" id="1_5od8w"]
+
+[node name="API Test" type="Node2D"]
+
+[node name="Node" type="Node" parent="."]
+script = ExtResource("1_5od8w")

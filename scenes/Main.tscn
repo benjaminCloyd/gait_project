@@ -239,7 +239,8 @@ tile_map_data = PackedByteArray("AAD2/wAAAgAAAAAAAAD2/+3/AgAAAAAAAAD2/+7/AgAAAAA
 tile_set = SubResource("TileSet_jlsqs")
 
 [node name="Light_Large" parent="." instance=ExtResource("6_jlsqs")]
-position = Vector2(82, -8.5)
+position = Vector2(-37, -8)
+light_scale = 4.0
 
 [node name="Light_Small" parent="." instance=ExtResource("9_q8u5g")]
 position = Vector2(-50.83008, -171.65138)
@@ -262,4 +263,5 @@ autoplay = true
 script = ExtResource("4_vcsgt")
 
 [node name="Light" parent="." instance=ExtResource("6_jlsqs")]
-position = Vector2(210, -7)
+position = Vector2(216, -7)
+light_scale = 4.0

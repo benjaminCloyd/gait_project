@@ -1,13 +1,20 @@
-[gd_scene load_steps=4 format=3 uid="uid://bb7hjqx3dnffp"]
+[gd_scene load_steps=6 format=3 uid="uid://bb7hjqx3dnffp"]
 
 [ext_resource type="Texture2D" uid="uid://dj15rdd7upt2m" path="res://Sprites/TempTileset.png" id="1_83503"]
 [ext_resource type="Script" uid="uid://dsryk7bnnp6o3" path="res://scripts/temp_projectile.gd" id="1_e4qt0"]
+[ext_resource type="PackedScene" uid="uid://dqrf3fdb7m4hu" path="res://scenes/hit_particles.tscn" id="2_02rlt"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_e4qt0"]
 size = Vector2(17, 16)
 
+[sub_resource type="Curve" id="Curve_e4qt0"]
+_limits = [-1.0, 1.0, 0.0, 1.0]
+_data = [Vector2(0.008670524, -0.17134404), 0.0, 0.05985635, 0, 0, Vector2(0.9710982, 0.123092175), 0.0, 0.0, 0, 0]
+point_count = 2
+
 [node name="Area2D" type="Area2D"]
 script = ExtResource("1_e4qt0")
+hit_particles_scene = ExtResource("2_02rlt")
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
 texture = ExtResource("1_83503")
@@ -20,9 +27,11 @@ shape = SubResource("RectangleShape2D_e4qt0")
 
 [node name="CPUParticles2D" type="CPUParticles2D" parent="."]
 rotation = -3.1415927
-amount = 64
+amount = 128
+lifetime = 0.5
+randomness = 0.1
 emission_shape = 1
-emission_sphere_radius = 5.78
+emission_sphere_radius = 10.4
 gravity = Vector2(0, 0)
 initial_velocity_max = 10.0
 linear_accel_min = -26.8
@@ -32,3 +41,4 @@ angle_max = -81.0
 color = Color(0.9764706, 0.6117647, 0.050980393, 1)
 hue_variation_min = -0.54
 hue_variation_max = 0.89
+hue_variation_curve = SubResource("Curve_e4qt0")

@@ -21,10 +21,12 @@ var mana: int
 var mana_regen_cooldown: float = 0.0
 var _mana_regen_buffer: float = 0.0
 
+
 # --- ATTACK / PROJECTILE ---
 @export var projectile_scene: PackedScene
 @export var projectile_speed: float = 300.0
 @export var attack_cooldown: float = 0.3
+@export var projectile_damage: int = 10
 var attack_cooldown_timer: float = 0.0
 
 var gravity: float = ProjectSettings.get_setting("physics/2d/default_gravity")
@@ -112,7 +114,6 @@ func try_attack() -> void:
 
 	shoot_projectile()
 
-
 func shoot_projectile() -> void:
 	var projectile := projectile_scene.instantiate() as Area2D
 	if projectile == null:
@@ -129,10 +130,9 @@ func shoot_projectile() -> void:
 		dir = Vector2.RIGHT
 
 	projectile.velocity = dir * projectile_speed
-	projectile.shooter = self
-
+	projectile.shooter  = self
+	projectile.damage   = projectile_damage   # <<— important
 	get_tree().current_scene.add_child(projectile)
-
 
 func take_damage(amount: int) -> void:
 	health -= amount

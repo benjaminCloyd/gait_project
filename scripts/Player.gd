@@ -18,9 +18,7 @@ const JUMP_VELOCITY := -300.0
 var health: int
 var mana: int
 
-# tracks time until regen can start
 var mana_regen_cooldown: float = 0.0
-# fractional mana regen buffer so we can keep mana as int
 var _mana_regen_buffer: float = 0.0
 
 # --- ATTACK / PROJECTILE ---
@@ -31,7 +29,8 @@ var attack_cooldown_timer: float = 0.0
 
 var gravity: float = ProjectSettings.get_setting("physics/2d/default_gravity")
 
-@onready var wand: Node2D = $Wand
+@onready var wand: Node2D   = $Wand
+@onready var sprite: Node2D = $AnimatedSprite2D   # change this path if your sprite node is named differently
 
 
 func _ready() -> void:
@@ -51,7 +50,6 @@ func _physics_process(delta: float) -> void:
 	if mana_regen_cooldown > 0.0:
 		mana_regen_cooldown -= delta
 	elif mana < max_mana:
-		# accumulate fractional mana then convert to int
 		_mana_regen_buffer += mana_regen_rate * delta
 		if _mana_regen_buffer >= 1.0:
 			var gained := int(_mana_regen_buffer)
@@ -68,10 +66,11 @@ func _physics_process(delta: float) -> void:
 	if Input.is_action_just_pressed("move_jump") and is_on_floor():
 		velocity.y = JUMP_VELOCITY
 
-	# --- horizontal movement ---
+	# --- horizontal movement + sprite flip ---
 	var direction := Input.get_axis("move_Left", "move_Right")
 	if direction != 0.0:
 		velocity.x = direction * SPEED
+		_update_facing(direction)
 	else:
 		velocity.x = move_toward(velocity.x, 0.0, SPEED)
 
@@ -82,8 +81,17 @@ func _physics_process(delta: float) -> void:
 	move_and_slide()
 
 
+func _update_facing(direction: float) -> void:
+	if not is_instance_valid(sprite):
+		return
+
+	if direction > 0.0:
+		sprite.scale.x = abs(sprite.scale.x)   # face right
+	elif direction < 0.0:
+		sprite.scale.x = -abs(sprite.scale.x)  # face left
+
+
 func try_attack() -> void:
-	# On cooldown
 	if attack_cooldown_timer > 0.0:
 		return
 
@@ -91,17 +99,14 @@ func try_attack() -> void:
 		push_warning("projectile_scene is not assigned on the player!")
 		return
 
-	# Not enough mana
 	if mana < mana_per_shot:
 		return
 
-	# Spend mana
 	mana -= mana_per_shot
 	if mana < 0:
 		mana = 0
 	emit_signal("mana_changed", mana, max_mana)
 
-	# reset regen delay & attack cooldown
 	mana_regen_cooldown = mana_regen_delay
 	attack_cooldown_timer = attack_cooldown
 
@@ -136,7 +141,7 @@ func take_damage(amount: int) -> void:
 	emit_signal("health_changed", health, max_health)
 
 	if health == 0:
-		# TODO: handle death
+		# TODO: death handling
 		pass
 
 

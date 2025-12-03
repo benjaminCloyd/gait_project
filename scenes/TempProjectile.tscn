@@ -17,3 +17,18 @@ region_rect = Rect2(63.321198, 127.08728, 16.678802, 16.91272)
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 position = Vector2(0.5, 1)
 shape = SubResource("RectangleShape2D_e4qt0")
+
+[node name="CPUParticles2D" type="CPUParticles2D" parent="."]
+rotation = -3.1415927
+amount = 64
+emission_shape = 1
+emission_sphere_radius = 5.78
+gravity = Vector2(0, 0)
+initial_velocity_max = 10.0
+linear_accel_min = -26.8
+linear_accel_max = 3.09
+angle_min = -90.0
+angle_max = -81.0
+color = Color(0.9764706, 0.6117647, 0.050980393, 1)
+hue_variation_min = -0.54
+hue_variation_max = 0.89

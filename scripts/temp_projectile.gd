@@ -6,7 +6,7 @@ extends Area2D
 var velocity: Vector2 = Vector2.ZERO
 var shooter: Node = null                        # who fired it (player/enemy)
 
-@onready var trail_particles: GPUParticles2D = $TrailParticles
+@onready var trail_particles: CPUParticles2D = $TrailParticles
 
 
 func _ready() -> void:

@@ -1,4 +1,4 @@
-[gd_scene load_steps=6 format=3 uid="uid://bb7hjqx3dnffp"]
+[gd_scene load_steps=8 format=3 uid="uid://bb7hjqx3dnffp"]
 
 [ext_resource type="Texture2D" uid="uid://dj15rdd7upt2m" path="res://Sprites/TempTileset.png" id="1_83503"]
 [ext_resource type="Script" uid="uid://dsryk7bnnp6o3" path="res://scripts/temp_projectile.gd" id="1_e4qt0"]
@@ -11,6 +11,15 @@ size = Vector2(17, 16)
 _limits = [-1.0, 1.0, 0.0, 1.0]
 _data = [Vector2(0.008670524, -0.17134404), 0.0, 0.05985635, 0, 0, Vector2(0.9710982, 0.123092175), 0.0, 0.0, 0, 0]
 point_count = 2
+
+[sub_resource type="Gradient" id="Gradient_02rlt"]
+offsets = PackedFloat32Array(0, 0.32, 0.68)
+colors = PackedColorArray(0.9607843, 0.69411767, 0, 1, 0.8666667, 0.7176471, 0.08235294, 1, 0, 0, 0, 1)
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_fxho0"]
+gradient = SubResource("Gradient_02rlt")
+fill = 1
+fill_from = Vector2(0.49299064, 0.5046729)
 
 [node name="Area2D" type="Area2D"]
 script = ExtResource("1_e4qt0")
@@ -25,7 +34,7 @@ region_rect = Rect2(63.321198, 127.08728, 16.678802, 16.91272)
 position = Vector2(0.5, 1)
 shape = SubResource("RectangleShape2D_e4qt0")
 
-[node name="CPUParticles2D" type="CPUParticles2D" parent="."]
+[node name="TrailParticles" type="CPUParticles2D" parent="."]
 rotation = -3.1415927
 amount = 128
 lifetime = 0.5
@@ -42,3 +51,9 @@ color = Color(0.9764706, 0.6117647, 0.050980393, 1)
 hue_variation_min = -0.54
 hue_variation_max = 0.89
 hue_variation_curve = SubResource("Curve_e4qt0")
+
+[node name="PointLight2D" type="PointLight2D" parent="."]
+position = Vector2(1, 3)
+color = Color(0.9607843, 0.69411767, 0, 1)
+energy = 0.5
+texture = SubResource("GradientTexture2D_fxho0")

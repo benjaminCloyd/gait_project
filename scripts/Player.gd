@@ -1,28 +1,147 @@
 extends CharacterBody2D
 
+signal health_changed(current: int, max_value: int)
+signal mana_changed(current: int, max_value: int)
 
-const SPEED = 100.0
-const JUMP_VELOCITY = -300.0
+const SPEED := 100.0
+const JUMP_VELOCITY := -300.0
 
-# Get the gravity from the project settings to be synced with RigidBody nodes.
-var gravity = ProjectSettings.get_setting("physics/2d/default_gravity")
+# --- STATS ---
+@export var max_health: int = 100
+@export var max_mana: int = 50
+@export var mana_per_shot: int = 5
+
+# mana regen settings
+@export var mana_regen_rate: float = 5.0      # mana per second
+@export var mana_regen_delay: float = 1.5     # seconds after last spell before regen starts
+
+var health: int
+var mana: int
+
+# tracks time until regen can start
+var mana_regen_cooldown: float = 0.0
+# fractional mana regen buffer so we can keep mana as int
+var _mana_regen_buffer: float = 0.0
+
+# --- ATTACK / PROJECTILE ---
+@export var projectile_scene: PackedScene
+@export var projectile_speed: float = 300.0
+@export var attack_cooldown: float = 0.3
+var attack_cooldown_timer: float = 0.0
+
+var gravity: float = ProjectSettings.get_setting("physics/2d/default_gravity")
+
+@onready var wand: Node2D = $Wand
 
 
-func _physics_process(delta):
-	# Add the gravity.
+func _ready() -> void:
+	health = max_health
+	mana = max_mana
+
+	emit_signal("health_changed", health, max_health)
+	emit_signal("mana_changed", mana, max_mana)
+
+
+func _physics_process(delta: float) -> void:
+	# --- attack cooldown ---
+	if attack_cooldown_timer > 0.0:
+		attack_cooldown_timer -= delta
+
+	# --- mana regen cooldown / tick ---
+	if mana_regen_cooldown > 0.0:
+		mana_regen_cooldown -= delta
+	elif mana < max_mana:
+		# accumulate fractional mana then convert to int
+		_mana_regen_buffer += mana_regen_rate * delta
+		if _mana_regen_buffer >= 1.0:
+			var gained := int(_mana_regen_buffer)
+			_mana_regen_buffer -= gained
+			var old_mana := mana
+			mana = min(max_mana, mana + gained)
+			if mana != old_mana:
+				emit_signal("mana_changed", mana, max_mana)
+
+	# --- gravity / jump ---
 	if not is_on_floor():
 		velocity.y += gravity * delta
 
-	# Handle jump.
 	if Input.is_action_just_pressed("move_jump") and is_on_floor():
 		velocity.y = JUMP_VELOCITY
 
-	# Get the input direction and handle the movement/deceleration.
-	# As good practice, you should replace UI actions with custom gameplay actions.
-	var direction = Input.get_axis("move_Left", "move_Right")
-	if direction:
+	# --- horizontal movement ---
+	var direction := Input.get_axis("move_Left", "move_Right")
+	if direction != 0.0:
 		velocity.x = direction * SPEED
 	else:
-		velocity.x = move_toward(velocity.x, 0, SPEED)
+		velocity.x = move_toward(velocity.x, 0.0, SPEED)
+
+	# --- attack input ---
+	if Input.is_action_just_pressed("attack"):
+		try_attack()
 
 	move_and_slide()
+
+
+func try_attack() -> void:
+	# On cooldown
+	if attack_cooldown_timer > 0.0:
+		return
+
+	if projectile_scene == null:
+		push_warning("projectile_scene is not assigned on the player!")
+		return
+
+	# Not enough mana
+	if mana < mana_per_shot:
+		return
+
+	# Spend mana
+	mana -= mana_per_shot
+	if mana < 0:
+		mana = 0
+	emit_signal("mana_changed", mana, max_mana)
+
+	# reset regen delay & attack cooldown
+	mana_regen_cooldown = mana_regen_delay
+	attack_cooldown_timer = attack_cooldown
+
+	shoot_projectile()
+
+
+func shoot_projectile() -> void:
+	var projectile := projectile_scene.instantiate() as Area2D
+	if projectile == null:
+		return
+
+	var spawn_pos: Vector2 = global_position
+	if is_instance_valid(wand):
+		spawn_pos = wand.global_position
+
+	projectile.global_position = spawn_pos
+
+	var dir: Vector2 = (get_global_mouse_position() - spawn_pos).normalized()
+	if dir == Vector2.ZERO:
+		dir = Vector2.RIGHT
+
+	projectile.velocity = dir * projectile_speed
+	projectile.shooter = self
+
+	get_tree().current_scene.add_child(projectile)
+
+
+func take_damage(amount: int) -> void:
+	health -= amount
+	if health < 0:
+		health = 0
+	emit_signal("health_changed", health, max_health)
+
+	if health == 0:
+		# TODO: handle death
+		pass
+
+
+func restore_mana(amount: int) -> void:
+	var old_mana := mana
+	mana = min(max_mana, mana + amount)
+	if mana != old_mana:
+		emit_signal("mana_changed", mana, max_mana)

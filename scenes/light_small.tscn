@@ -1,0 +1,26 @@
+[gd_scene load_steps=5 format=3 uid="uid://cw071k4hrj170"]
+
+[ext_resource type="Script" uid="uid://bi8qee2j51km8" path="res://scripts/light.gd" id="1_bc5ua"]
+[ext_resource type="Texture2D" uid="uid://d3k4hqbya22tw" path="res://Sprites/TileSetGAIT.png" id="1_nubi8"]
+
+[sub_resource type="Gradient" id="Gradient_nxtc6"]
+offsets = PackedFloat32Array(0, 0.32, 0.68)
+colors = PackedColorArray(0.9607843, 0.69411767, 0, 1, 0.8666667, 0.7176471, 0.08235294, 1, 0, 0, 0, 1)
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_tglur"]
+gradient = SubResource("Gradient_nxtc6")
+fill = 1
+fill_from = Vector2(0.49299064, 0.5046729)
+
+[node name="Light_Small" type="Node2D"]
+script = ExtResource("1_bc5ua")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+texture = ExtResource("1_nubi8")
+region_enabled = true
+region_rect = Rect2(32, 64, 16, 16)
+
+[node name="PointLight2D" type="PointLight2D" parent="."]
+position = Vector2(0, -6)
+color = Color(0.9607843, 0.69411767, 0, 1)
+texture = SubResource("GradientTexture2D_tglur")

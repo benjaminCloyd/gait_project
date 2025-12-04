@@ -371,3 +371,6 @@ position = Vector2(0, -16)
 [node name="ObstacleCheck" type="RayCast2D" parent="."]
 position = Vector2(2, -9)
 target_position = Vector2(26, 0)
+
+[node name="AudioStreamPlayer" type="AudioStreamPlayer" parent="."]
+volume_db = 11.927

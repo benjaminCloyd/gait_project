@@ -49,7 +49,10 @@ var is_dead: bool = false
 @onready var wand: Node2D                 = $Wand
 @onready var animated_sprite: AnimatedSprite2D = $Sprite2D
 @onready var obstacle_check: RayCast2D    = get_node_or_null("ObstacleCheck")
+@onready var audio_player: AudioStreamPlayer = $AudioStreamPlayer
 var obstacle_base_target: Vector2 = Vector2.ZERO
+
+
 
 
 func _ready() -> void:
@@ -292,6 +295,7 @@ func shoot_projectile_at_player() -> void:
 # ---------- DAMAGE / DEATH ----------
 
 func take_damage(amount: int) -> void:
+	
 	if is_dead:
 		return
 
@@ -306,7 +310,13 @@ func take_damage(amount: int) -> void:
 	else:
 		hurt_anim_timer = hurt_anim_duration
 		_play_anim("Hurt")
-
+	
+	var insult = await APIManager.ask_gemini("Give me a short mean insult one sentence and creative.")
+	print("Boss Text: ", insult)
+	# 2. Speak the text using the TTS Manager
+	# This call is correct as GoogleTTSManager handles the speaking logic.
+	await ttsApi.speak_text(insult, audio_player)
+	
 
 func die() -> void:
 	if is_dead:
@@ -317,3 +327,8 @@ func die() -> void:
 	# Let the death animation play, then remove
 	await get_tree().create_timer(death_anim_duration).timeout
 	queue_free()
+
+
+# Inside your Boss.gd
+
+# Boss.gd (Corrected)

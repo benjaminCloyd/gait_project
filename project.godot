@@ -18,6 +18,7 @@ config/icon="res://icon.svg"
 [autoload]
 
 APIManager="*res://scripts/APIManager.gd"
+ttsApi="*res://scripts/ttsAPI.gd"
 
 [input]
 

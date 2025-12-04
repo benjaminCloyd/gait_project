@@ -6,10 +6,11 @@ var request : HTTPRequest
 
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
-	var env = preload("res://scripts/load_env.gd")
-	var instance = env.new()
+	#Example of the global call
+	var reply = await APIManager.ask_gemini("Give me a 1 sentence roast for the player hitting me")
+	print("Boss:" + reply)
 	
-	API_KEY = instance.load_env_variable("GEMINI_API_KEY")
+	API_KEY = EnvLoader.load_env_variable("GEMINI_API_KEY")
 	
 	if API_KEY == "":
 		print("Coudln't find API Key in .env file")
@@ -21,7 +22,7 @@ func _ready() -> void:
 	add_child(request)
 	request.request_completed.connect(_on_request_completed)
 	
-	dialogue_request("Insult me as if you are an evil boss")
+	dialogue_request("Insult me as if you are an evil boss, only use 3 sentences")
 	
 func dialogue_request(player_dialogue):
 	var headers = ["Content-Type: application/json"]

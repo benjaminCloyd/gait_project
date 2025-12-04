@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://cmh5dv4k5vxmm"
-path="res://.godot/imported/GaitMenuSprites.png-87a3562bac60c74f8723aac009e51b86.ctex"
+path="res://.godot/imported/GaitMenuSprites.png-3219438e22f9171c209bb0f1094321bd.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Sprites/GaitMenuSprites.png"
-dest_files=["res://.godot/imported/GaitMenuSprites.png-87a3562bac60c74f8723aac009e51b86.ctex"]
+source_file="res://sprites/GaitMenuSprites.png"
+dest_files=["res://.godot/imported/GaitMenuSprites.png-3219438e22f9171c209bb0f1094321bd.ctex"]
 
 [params]
 

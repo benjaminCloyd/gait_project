@@ -1,16 +1,15 @@
 extends Area2D
 
-@export var damage: int = 10                    # how much damage it does
-@export var hit_particles_scene: PackedScene    # assign HitParticles.tscn in the Inspector
+@export var damage: int = 10
+@export var hit_particles_scene: PackedScene
 
 var velocity: Vector2 = Vector2.ZERO
-var shooter: Node = null                        # who fired it (player/enemy)
+var shooter: Node = null
 
 @onready var trail_particles: CPUParticles2D = $TrailParticles
 
 
 func _ready() -> void:
-	# Make sure trail is on
 	if is_instance_valid(trail_particles):
 		trail_particles.emitting = true
 
@@ -45,8 +44,17 @@ func _spawn_hit_particles() -> void:
 	if hit_particles_scene == null:
 		return
 
-	var hit = hit_particles_scene.instantiate()
+	var tree := get_tree()
+	if tree == null:
+		return
+
+	var hit := hit_particles_scene.instantiate()
 	if hit is Node2D:
 		hit.global_position = global_position
 
-	get_tree().current_scene.add_child(hit)
+	var parent: Node = tree.current_scene
+	if parent == null:
+		parent = get_parent()
+
+	if parent != null:
+		parent.add_child(hit)

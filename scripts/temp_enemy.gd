@@ -127,7 +127,7 @@ func _physics_process_ground(delta: float, to_player: Vector2, distance: float) 
 
 # ---------- FLYING VERSION (new strafing + LOS hunting) ----------
 
-func _physics_process_flying(delta: float, to_player: Vector2, distance: float) -> void:
+func _physics_process_flying(_delta: float, to_player: Vector2, distance: float) -> void:
 	var move_dir: Vector2 = Vector2.ZERO
 	var to_dir: Vector2 = to_player.normalized()
 

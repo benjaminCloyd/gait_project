@@ -2,6 +2,7 @@ extends CharacterBody2D
 
 signal health_changed(current: int, max_value: int)
 signal mana_changed(current: int, max_value: int)
+signal died
 
 const SPEED := 100.0
 const JUMP_VELOCITY := -300.0
@@ -152,8 +153,7 @@ func take_damage(amount: int) -> void:
 	emit_signal("health_changed", health, max_health)
 
 	if health == 0:
-		# TODO: death handling
-		pass
+		emit_signal("died")
 
 
 func restore_mana(amount: int) -> void:

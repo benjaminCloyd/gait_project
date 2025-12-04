@@ -22,7 +22,7 @@ func _ready() -> void:
 	add_child(request)
 	request.request_completed.connect(_on_request_completed)
 	
-	#dialogue_request("Insult me as if you are an evil boss, only use 3 sentences")
+	dialogue_request("Insult me as if you are an evil boss, only use 3 sentences")
 	
 func dialogue_request(player_dialogue):
 	var headers = ["Content-Type: application/json"]

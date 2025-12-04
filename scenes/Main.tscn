@@ -1,4 +1,4 @@
-[gd_scene load_steps=18 format=4 uid="uid://br1k4031gqe1c"]
+[gd_scene load_steps=17 format=4 uid="uid://br1k4031gqe1c"]
 
 [ext_resource type="PackedScene" uid="uid://buopsyna4ftlc" path="res://scenes/Player.tscn" id="1_524sx"]
 [ext_resource type="Script" uid="uid://c1xkxns68rbor" path="res://main_ui.gd" id="1_c01mt"]
@@ -9,7 +9,6 @@
 [ext_resource type="PackedScene" uid="uid://exvuexhqdtlc" path="res://scenes/TempEnemy.tscn" id="5_nxtc6"]
 [ext_resource type="PackedScene" uid="uid://b8sol7vgi1e81" path="res://scenes/light_Large.tscn" id="6_jlsqs"]
 [ext_resource type="PackedScene" uid="uid://cw071k4hrj170" path="res://scenes/light_small.tscn" id="9_q8u5g"]
-[ext_resource type="Script" uid="uid://bu2mfrg4q3fjo" path="res://scripts/API.gd" id="10_lhr70"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_c01mt"]
 content_margin_left = 2.0
@@ -264,6 +263,3 @@ script = ExtResource("4_vcsgt")
 
 [node name="Light" parent="." instance=ExtResource("6_jlsqs")]
 position = Vector2(210, -7)
-
-[node name="Node" type="Node" parent="."]
-script = ExtResource("10_lhr70")

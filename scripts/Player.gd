@@ -11,6 +11,10 @@ const JUMP_VELOCITY := -300.0
 @export var max_mana: int = 50
 @export var mana_per_shot: int = 5
 
+# --- JUMP SETTINGS ---
+@export var max_jumps: int = 2  # 2 = double jump, 1 = normal, 3 = triple, etc.
+var jumps_left: int = 0
+
 # mana regen settings
 @export var mana_regen_rate: float = 5.0      # mana per second
 @export var mana_regen_delay: float = 1.5     # seconds after last spell before regen starts
@@ -20,7 +24,6 @@ var mana: int
 
 var mana_regen_cooldown: float = 0.0
 var _mana_regen_buffer: float = 0.0
-
 
 # --- ATTACK / PROJECTILE ---
 @export var projectile_scene: PackedScene
@@ -38,6 +41,7 @@ var gravity: float = ProjectSettings.get_setting("physics/2d/default_gravity")
 func _ready() -> void:
 	health = max_health
 	mana = max_mana
+	jumps_left = max_jumps
 
 	emit_signal("health_changed", health, max_health)
 	emit_signal("mana_changed", mana, max_mana)
@@ -61,12 +65,17 @@ func _physics_process(delta: float) -> void:
 			if mana != old_mana:
 				emit_signal("mana_changed", mana, max_mana)
 
-	# --- gravity / jump ---
+	# --- gravity ---
 	if not is_on_floor():
 		velocity.y += gravity * delta
+	else:
+		# On the ground: reset jumps
+		jumps_left = max_jumps
 
-	if Input.is_action_just_pressed("move_jump") and is_on_floor():
+	# --- jump / double jump ---
+	if Input.is_action_just_pressed("move_jump") and jumps_left > 0:
 		velocity.y = JUMP_VELOCITY
+		jumps_left -= 1
 
 	# --- horizontal movement + sprite flip ---
 	var direction := Input.get_axis("move_Left", "move_Right")
@@ -114,6 +123,7 @@ func try_attack() -> void:
 
 	shoot_projectile()
 
+
 func shoot_projectile() -> void:
 	var projectile := projectile_scene.instantiate() as Area2D
 	if projectile == null:
@@ -131,8 +141,9 @@ func shoot_projectile() -> void:
 
 	projectile.velocity = dir * projectile_speed
 	projectile.shooter  = self
-	projectile.damage   = projectile_damage   # <<— important
+	projectile.damage   = projectile_damage
 	get_tree().current_scene.add_child(projectile)
+
 
 func take_damage(amount: int) -> void:
 	health -= amount

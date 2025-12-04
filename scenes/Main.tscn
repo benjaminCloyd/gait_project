@@ -327,6 +327,7 @@ position_smoothing_enabled = true
 process_mode = 1
 z_index = 2
 position = Vector2(119, -2)
+can_fly = true
 
 [node name="Midground" type="TileMapLayer" parent="."]
 process_mode = 1

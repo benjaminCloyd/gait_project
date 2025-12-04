@@ -2,7 +2,11 @@ extends CharacterBody2D
 
 signal health_changed(current: int, max_value: int)
 
-# --- STATS / TUNING ---
+# ---------- STATES ----------
+enum EnemyState { NORMAL, ATTACK, HURT, DEAD }
+var state: int = EnemyState.NORMAL
+
+# ---------- STATS / TUNING ----------
 @export var max_health: int = 50
 @export var move_speed: float = 70.0
 
@@ -26,13 +30,8 @@ signal health_changed(current: int, max_value: int)
 @export var require_line_of_sight: bool = true
 @export var los_collision_mask: int = 1       # which layers block LOS (walls, etc.)
 
-# Animation timing
-@export var hurt_anim_duration: float = 0.25
-@export var attack_anim_duration: float = 0.35
-@export var death_anim_duration: float = 0.6
-
 var health: int
-var attack_cooldown_timer: float = 3.0
+var attack_cooldown_timer: float = 0.0
 var gravity: float = ProjectSettings.get_setting("physics/2d/default_gravity")
 
 # Player reference (auto-detected via group "Player")
@@ -41,13 +40,8 @@ var player: CharacterBody2D = null
 # Flying strafe direction (1 = clockwise, -1 = counter-clockwise)
 var fly_strafe_dir: float = 1.0
 
-# Animation state
-var hurt_anim_timer: float = 0.6
-var attack_anim_timer: float = 2.6
-var is_dead: bool = false
-
 @onready var wand: Node2D                 = $Wand
-@onready var animated_sprite: AnimatedSprite2D = $Sprite2D
+@onready var animated_sprite: AnimatedSprite2D = $AnimatedSprite2D
 @onready var obstacle_check: RayCast2D    = get_node_or_null("ObstacleCheck")
 var obstacle_base_target: Vector2 = Vector2.ZERO
 
@@ -61,11 +55,13 @@ func _ready() -> void:
 		obstacle_base_target = obstacle_check.target_position
 
 	if animated_sprite:
-		animated_sprite.play("Idle")
+		animated_sprite.play("idle")
+		# Make sure attack / hurt / death are NOT looped in the editor
+		animated_sprite.animation_finished.connect(_on_animation_finished)
 
 
 func _physics_process(delta: float) -> void:
-	if is_dead:
+	if state == EnemyState.DEAD:
 		return
 
 	# Ensure we have a valid player target
@@ -74,13 +70,9 @@ func _physics_process(delta: float) -> void:
 		if player == null or not is_instance_valid(player):
 			return
 
-	# Timers
+	# --- timers ---
 	if attack_cooldown_timer > 0.0:
 		attack_cooldown_timer -= delta
-	if hurt_anim_timer > 0.0:
-		hurt_anim_timer -= delta
-	if attack_anim_timer > 0.0:
-		attack_anim_timer -= delta
 
 	var to_player: Vector2 = player.global_position - global_position
 	var distance: float = to_player.length()
@@ -90,6 +82,8 @@ func _physics_process(delta: float) -> void:
 	else:
 		_physics_process_ground(delta, to_player, distance)
 
+	_update_animation_state()
+
 
 # ---------- GROUND VERSION ----------
 
@@ -98,7 +92,6 @@ func _physics_process_ground(delta: float, to_player: Vector2, distance: float) 
 	if not is_on_floor():
 		velocity.y += gravity * delta
 
-	# movement AI (keep distance horizontally)
 	var dir_x: float = 0.0
 
 	if distance <= detection_radius:
@@ -121,7 +114,6 @@ func _physics_process_ground(delta: float, to_player: Vector2, distance: float) 
 
 	# Jump over obstacles
 	if can_jump_over_obstacles and is_on_floor() and dir_x != 0.0 and obstacle_check:
-		# Flip the ray to face the direction of travel
 		if dir_x > 0.0:
 			obstacle_check.target_position = Vector2(
 				abs(obstacle_base_target.x),
@@ -136,35 +128,30 @@ func _physics_process_ground(delta: float, to_player: Vector2, distance: float) 
 		if obstacle_check.is_colliding():
 			velocity.y = jump_velocity
 
-	# Attack AI
+	# Attack only if we’re in NORMAL state
 	var has_los := not require_line_of_sight or _has_line_of_sight_to_player()
-	if distance <= attack_range and attack_cooldown_timer <= 0.0 and has_los:
-		shoot_projectile_at_player()
-		attack_cooldown_timer = attack_cooldown
-		attack_anim_timer = attack_anim_duration
-		_play_anim("Attack")
+	if state == EnemyState.NORMAL and distance <= attack_range and attack_cooldown_timer <= 0.0 and has_los:
+		_do_attack()
 
 	move_and_slide()
-	_update_animation_state()
 
 
 # ---------- FLYING VERSION ----------
 
-func _physics_process_flying(delta: float, to_player: Vector2, distance: float) -> void:
+func _physics_process_flying(_delta: float, to_player: Vector2, distance: float) -> void:
 	var move_dir: Vector2 = Vector2.ZERO
 	var to_dir: Vector2 = to_player.normalized()
 
-	# Check LOS
 	var has_los := not require_line_of_sight or _has_line_of_sight_to_player()
 
 	if distance <= detection_radius:
-		# 1) Radial movement to maintain distance band
+		# Radial movement to keep distance band
 		if distance < min_distance:
-			move_dir += -to_dir              # move away
+			move_dir += -to_dir
 		elif distance > attack_range:
-			move_dir += to_dir               # move closer
+			move_dir += to_dir
 
-		# 2) If LOS is blocked, strafe around to hunt for clear angle
+		# If LOS blocked, strafe around to find angle
 		if require_line_of_sight and not has_los:
 			var tangent := Vector2(-to_dir.y, to_dir.x) * fly_strafe_dir
 			move_dir += tangent * 0.8
@@ -180,44 +167,51 @@ func _physics_process_flying(delta: float, to_player: Vector2, distance: float) 
 	if velocity.x != 0.0:
 		_update_facing(sign(velocity.x))
 
-	# Attack AI
-	if distance <= attack_range and attack_cooldown_timer <= 0.0 and has_los:
-		shoot_projectile_at_player()
-		attack_cooldown_timer = attack_cooldown
-		attack_anim_timer = attack_anim_duration
-		_play_anim("Attack")
+	# Attack only if we’re in NORMAL state
+	if state == EnemyState.NORMAL and distance <= attack_range and attack_cooldown_timer <= 0.0 and has_los:
+		_do_attack()
 
 	move_and_slide()
-	_update_animation_state()
 
 
-# ---------- ANIMATION HELPERS ----------
+# ---------- ATTACK / ANIM STATE ----------
 
-func _update_facing(direction: float) -> void:
+func _do_attack() -> void:
+	shoot_projectile_at_player()
+	attack_cooldown_timer = attack_cooldown
+
+	state = EnemyState.ATTACK
+	_play_anim("attack")  # will restart attack anim every time
+
+
+func _on_animation_finished() -> void:
 	if not is_instance_valid(animated_sprite):
 		return
 
-	if direction > 0.0:
-		animated_sprite.scale.x = abs(animated_sprite.scale.x)      # face right
-	elif direction < 0.0:
-		animated_sprite.scale.x = -abs(animated_sprite.scale.x)     # face left
+	var anim_name := animated_sprite.animation
+	# print("Enemy anim finished: ", anim_name)  # uncomment for debugging
+
+	match anim_name:
+		"attack":
+			if state == EnemyState.ATTACK:
+				state = EnemyState.NORMAL
+		"hurt":
+			if state == EnemyState.HURT:
+				state = EnemyState.NORMAL
+		"death":
+			# death is final
+			if state == EnemyState.DEAD:
+				queue_free()
 
 
 func _update_animation_state() -> void:
-	if not is_instance_valid(animated_sprite) or is_dead:
+	if not is_instance_valid(animated_sprite):
 		return
 
-	# If in hurt anim window, keep hurt
-	if hurt_anim_timer > 0.0:
-		_play_anim("Hurt")
+	# Don't override attack/hurt/death animations
+	if state == EnemyState.ATTACK or state == EnemyState.HURT or state == EnemyState.DEAD:
 		return
 
-	# If in attack anim window, keep attack
-	if attack_anim_timer > 0.0:
-		_play_anim("Attack")
-		return
-
-	# Base movement state: walk vs idle
 	var moving: bool = false
 	if can_fly:
 		moving = velocity.length() > 5.0
@@ -225,22 +219,30 @@ func _update_animation_state() -> void:
 		moving = abs(velocity.x) > 5.0 and is_on_floor()
 
 	if moving:
-		_play_anim("Walk")
+		_play_anim("walk")
 	else:
-		_play_anim("Idle")
+		_play_anim("idle")
 
 
 func _play_anim(name: String) -> void:
 	if not is_instance_valid(animated_sprite):
 		return
-	if animated_sprite.animation != name:
-		animated_sprite.play(name)
+	animated_sprite.play(name)
+
+
+func _update_facing(direction: float) -> void:
+	if not is_instance_valid(animated_sprite):
+		return
+
+	if direction > 0.0:
+		animated_sprite.scale.x = abs(animated_sprite.scale.x)
+	elif direction < 0.0:
+		animated_sprite.scale.x = -abs(animated_sprite.scale.x)
 
 
 # ---------- TARGETING / LOS / PROJECTILES ----------
 
 func _find_player() -> void:
-	# Player must be in the "Player" group (set this on your Player node)
 	var players := get_tree().get_nodes_in_group("Player")
 	if players.size() > 0:
 		var candidate = players[0]
@@ -292,7 +294,7 @@ func shoot_projectile_at_player() -> void:
 # ---------- DAMAGE / DEATH ----------
 
 func take_damage(amount: int) -> void:
-	if is_dead:
+	if state == EnemyState.DEAD:
 		return
 
 	health -= amount
@@ -302,18 +304,9 @@ func take_damage(amount: int) -> void:
 	emit_signal("health_changed", health, max_health)
 
 	if health == 0:
-		die()
+		state = EnemyState.DEAD
+		velocity = Vector2.ZERO
+		_play_anim("death")
 	else:
-		hurt_anim_timer = hurt_anim_duration
-		_play_anim("Hurt")
-
-
-func die() -> void:
-	if is_dead:
-		return
-	is_dead = true
-	velocity = Vector2.ZERO
-	_play_anim("Death")
-	# Let the death animation play, then remove
-	await get_tree().create_timer(death_anim_duration).timeout
-	queue_free()
+		state = EnemyState.HURT
+		_play_anim("hurt")

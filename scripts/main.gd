@@ -2,22 +2,19 @@ extends Node2D
 
 @onready var pause_menu: Control = $CanvasLayer/Ui/PauseMenuBackground
 @onready var pause_menu_ui: Control = $CanvasLayer/Ui/PauseMenuUI
-
-
-@onready var player: CharacterBody2D = $Player  # adjust path if needed
+@onready var player: CharacterBody2D = $Player   # adjust path if needed
 
 func _ready() -> void:
+	# Connect to the player's death
 	player.died.connect(_on_player_died)
 
 
 func _on_player_died() -> void:
-	# Make sure the game isn't paused anymore
-	get_tree().paused = false# Defer scene change until after physics step
-	call_deferred("_go_to_game_over")
+	# Make sure the game isn't paused
+	get_tree().paused = false
 
-
-func _go_to_game_over() -> void:
-	get_tree().change_scene_to_file("res://Scenes/GameOver.tscn")  # <- use your real path
+	# Go to the Game Over screen
+	get_tree().change_scene_to_file("res://scenes/GameOver.tscn")  # change path to your actual GameOver scene
 
 func _input(event: InputEvent) -> void:
 	if event.is_action_pressed("Pause"): # or your custom "pause" action

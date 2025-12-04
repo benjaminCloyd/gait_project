@@ -3,8 +3,8 @@ extends MarginContainer
 
 @export var player_path: NodePath
 
-@onready var health_bar: ProgressBar = $VBoxContainer/HealthBar
-@onready var mana_bar: ProgressBar   = $VBoxContainer/ManaBar
+@onready var health_bar: TextureProgressBar = $VBoxContainer/HealthBar
+@onready var mana_bar: TextureProgressBar   = $VBoxContainer/ManaBar
 
 var player: Node
 

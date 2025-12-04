@@ -226,9 +226,9 @@ animations = [{
 "duration": 1.0,
 "texture": SubResource("AtlasTexture_w8b02")
 }],
-"loop": true,
-"name": &"Attack",
-"speed": 5.0
+"loop": false,
+"name": &"attack",
+"speed": 10.0
 }, {
 "frames": [{
 "duration": 1.0,
@@ -270,8 +270,8 @@ animations = [{
 "duration": 1.0,
 "texture": SubResource("AtlasTexture_cue1m")
 }],
-"loop": true,
-"name": &"Death",
+"loop": false,
+"name": &"death",
 "speed": 5.0
 }, {
 "frames": [{
@@ -284,8 +284,8 @@ animations = [{
 "duration": 1.0,
 "texture": SubResource("AtlasTexture_s464s")
 }],
-"loop": true,
-"name": &"Hurt",
+"loop": false,
+"name": &"hurt",
 "speed": 5.0
 }, {
 "frames": [{
@@ -301,8 +301,8 @@ animations = [{
 "duration": 1.0,
 "texture": SubResource("AtlasTexture_qp6mt")
 }],
-"loop": true,
-"name": &"Idle",
+"loop": false,
+"name": &"idle",
 "speed": 10.0
 }, {
 "frames": [{
@@ -342,8 +342,8 @@ animations = [{
 "duration": 1.0,
 "texture": SubResource("AtlasTexture_qowrn")
 }],
-"loop": true,
-"name": &"Walk",
+"loop": false,
+"name": &"walk",
 "speed": 5.0
 }]
 
@@ -355,11 +355,10 @@ height = 18.0
 script = ExtResource("1_frp51")
 projectile_scene = ExtResource("2_g3jqs")
 
-[node name="Sprite2D" type="AnimatedSprite2D" parent="."]
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
 position = Vector2(1, -12)
 sprite_frames = SubResource("SpriteFrames_idac6")
-animation = &"Death"
-autoplay = "Idle"
+animation = &"attack"
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 position = Vector2(1, -8)

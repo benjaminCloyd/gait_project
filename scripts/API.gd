@@ -1,11 +1,22 @@
 extends Node
 
 var API_KEY = ""
-var url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=" + API_KEY
+var url = ""
 var request : HTTPRequest
 
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
+	var env = preload("res://scripts/load_env.gd")
+	var instance = env.new()
+	
+	API_KEY = instance.load_env_variable("GEMINI_API_KEY")
+	
+	if API_KEY == "":
+		print("Coudln't find API Key in .env file")
+		return
+	
+	url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=" + API_KEY
+	
 	request = HTTPRequest.new()
 	add_child(request)
 	request.request_completed.connect(_on_request_completed)

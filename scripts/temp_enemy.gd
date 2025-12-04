@@ -12,7 +12,7 @@ signal health_changed(current: int, max_value: int)
 
 @export var attack_cooldown: float = 0.8      # seconds between shots
 @export var attack_range: float = 70.0       # will shoot when distance <= this
-@export var min_distance: float = 50.0       # tries to stay at least this far away
+@export var min_distance: float = 50.0       # prefers to stay at least this far
 @export var detection_radius: float = 500.0   # starts reacting when player is within this
 
 # Ground movement / jumping
@@ -20,14 +20,19 @@ signal health_changed(current: int, max_value: int)
 @export var can_jump_over_obstacles: bool = true
 
 # Flying behaviour
-@export var can_fly: bool = true             # if true, no gravity & full 2D movement
+@export var can_fly: bool = false             # if true, no gravity & full 2D movement
 
 # Line of sight for attacks
 @export var require_line_of_sight: bool = true
-@export var los_collision_mask: int = 1       # which layers block line of sight (walls, etc.)
+@export var los_collision_mask: int = 1       # which layers block LOS (walls, etc.)
+
+# Animation timing
+@export var hurt_anim_duration: float = 0.25
+@export var attack_anim_duration: float = 0.35
+@export var death_anim_duration: float = 0.6
 
 var health: int
-var attack_cooldown_timer: float = 0.0
+var attack_cooldown_timer: float = 3.0
 var gravity: float = ProjectSettings.get_setting("physics/2d/default_gravity")
 
 # Player reference (auto-detected via group "Player")
@@ -36,9 +41,14 @@ var player: CharacterBody2D = null
 # Flying strafe direction (1 = clockwise, -1 = counter-clockwise)
 var fly_strafe_dir: float = 1.0
 
-@onready var wand: Node2D          = $Wand
-@onready var sprite: Node2D        = $Sprite2D
-@onready var obstacle_check: RayCast2D = get_node_or_null("ObstacleCheck")
+# Animation state
+var hurt_anim_timer: float = 0.6
+var attack_anim_timer: float = 2.6
+var is_dead: bool = false
+
+@onready var wand: Node2D                 = $Wand
+@onready var animated_sprite: AnimatedSprite2D = $Sprite2D
+@onready var obstacle_check: RayCast2D    = get_node_or_null("ObstacleCheck")
 var obstacle_base_target: Vector2 = Vector2.ZERO
 
 
@@ -50,17 +60,27 @@ func _ready() -> void:
 	if obstacle_check:
 		obstacle_base_target = obstacle_check.target_position
 
+	if animated_sprite:
+		animated_sprite.play("Idle")
+
 
 func _physics_process(delta: float) -> void:
+	if is_dead:
+		return
+
 	# Ensure we have a valid player target
 	if player == null or not is_instance_valid(player):
 		_find_player()
 		if player == null or not is_instance_valid(player):
 			return
 
-	# --- timers ---
+	# Timers
 	if attack_cooldown_timer > 0.0:
 		attack_cooldown_timer -= delta
+	if hurt_anim_timer > 0.0:
+		hurt_anim_timer -= delta
+	if attack_anim_timer > 0.0:
+		attack_anim_timer -= delta
 
 	var to_player: Vector2 = player.global_position - global_position
 	var distance: float = to_player.length()
@@ -71,14 +91,14 @@ func _physics_process(delta: float) -> void:
 		_physics_process_ground(delta, to_player, distance)
 
 
-# ---------- GROUND VERSION (unchanged from before) ----------
+# ---------- GROUND VERSION ----------
 
 func _physics_process_ground(delta: float, to_player: Vector2, distance: float) -> void:
 	# Gravity
 	if not is_on_floor():
 		velocity.y += gravity * delta
 
-	# ----- movement AI (keep distance horizontally) -----
+	# movement AI (keep distance horizontally)
 	var dir_x: float = 0.0
 
 	if distance <= detection_radius:
@@ -86,7 +106,7 @@ func _physics_process_ground(delta: float, to_player: Vector2, distance: float) 
 		if distance < min_distance:
 			if abs(to_player.x) > 4.0:
 				dir_x = -sign(to_player.x)
-		# Too far (but still interested): move closer
+		# Too far: move closer
 		elif distance > attack_range:
 			if abs(to_player.x) > 4.0:
 				dir_x = sign(to_player.x)
@@ -99,7 +119,7 @@ func _physics_process_ground(delta: float, to_player: Vector2, distance: float) 
 	else:
 		velocity.x = move_toward(velocity.x, 0.0, move_speed)
 
-	# Simple jump over obstacles
+	# Jump over obstacles
 	if can_jump_over_obstacles and is_on_floor() and dir_x != 0.0 and obstacle_check:
 		# Flip the ray to face the direction of travel
 		if dir_x > 0.0:
@@ -116,22 +136,25 @@ func _physics_process_ground(delta: float, to_player: Vector2, distance: float) 
 		if obstacle_check.is_colliding():
 			velocity.y = jump_velocity
 
-	# --- attack AI ---
+	# Attack AI
 	var has_los := not require_line_of_sight or _has_line_of_sight_to_player()
 	if distance <= attack_range and attack_cooldown_timer <= 0.0 and has_los:
 		shoot_projectile_at_player()
 		attack_cooldown_timer = attack_cooldown
+		attack_anim_timer = attack_anim_duration
+		_play_anim("Attack")
 
 	move_and_slide()
+	_update_animation_state()
 
 
-# ---------- FLYING VERSION (new strafing + LOS hunting) ----------
+# ---------- FLYING VERSION ----------
 
-func _physics_process_flying(_delta: float, to_player: Vector2, distance: float) -> void:
+func _physics_process_flying(delta: float, to_player: Vector2, distance: float) -> void:
 	var move_dir: Vector2 = Vector2.ZERO
 	var to_dir: Vector2 = to_player.normalized()
 
-	# Check LOS once this frame
+	# Check LOS
 	var has_los := not require_line_of_sight or _has_line_of_sight_to_player()
 
 	if distance <= detection_radius:
@@ -141,47 +164,80 @@ func _physics_process_flying(_delta: float, to_player: Vector2, distance: float)
 		elif distance > attack_range:
 			move_dir += to_dir               # move closer
 
-		# 2) If LOS is blocked, add tangential (sideways) movement to try to peek
+		# 2) If LOS is blocked, strafe around to hunt for clear angle
 		if require_line_of_sight and not has_los:
-			# Tangent to the vector pointing to the player (perpendicular)
 			var tangent := Vector2(-to_dir.y, to_dir.x) * fly_strafe_dir
-			move_dir += tangent * 0.8        # 0.8 = how "wide" the strafe is
-
-			# Occasionally flip strafe direction to avoid circling forever one way
+			move_dir += tangent * 0.8
 			if randf() < 0.01:
 				fly_strafe_dir *= -1.0
 	else:
-		# Player out of detection radius → idle
 		move_dir = Vector2.ZERO
 
-	# Apply movement
 	if move_dir != Vector2.ZERO:
 		move_dir = move_dir.normalized()
 	velocity = move_dir * move_speed
 
-	# Flip sprite based on horizontal movement
 	if velocity.x != 0.0:
 		_update_facing(sign(velocity.x))
 
-	# --- attack AI ---
+	# Attack AI
 	if distance <= attack_range and attack_cooldown_timer <= 0.0 and has_los:
 		shoot_projectile_at_player()
 		attack_cooldown_timer = attack_cooldown
+		attack_anim_timer = attack_anim_duration
+		_play_anim("Attack")
 
 	move_and_slide()
+	_update_animation_state()
 
 
-# ---------- SHARED HELPERS ----------
+# ---------- ANIMATION HELPERS ----------
 
 func _update_facing(direction: float) -> void:
-	if not is_instance_valid(sprite):
+	if not is_instance_valid(animated_sprite):
 		return
 
 	if direction > 0.0:
-		sprite.scale.x = abs(sprite.scale.x)      # face right
+		animated_sprite.scale.x = abs(animated_sprite.scale.x)      # face right
 	elif direction < 0.0:
-		sprite.scale.x = -abs(sprite.scale.x)     # face left
+		animated_sprite.scale.x = -abs(animated_sprite.scale.x)     # face left
 
+
+func _update_animation_state() -> void:
+	if not is_instance_valid(animated_sprite) or is_dead:
+		return
+
+	# If in hurt anim window, keep hurt
+	if hurt_anim_timer > 0.0:
+		_play_anim("Hurt")
+		return
+
+	# If in attack anim window, keep attack
+	if attack_anim_timer > 0.0:
+		_play_anim("Attack")
+		return
+
+	# Base movement state: walk vs idle
+	var moving: bool = false
+	if can_fly:
+		moving = velocity.length() > 5.0
+	else:
+		moving = abs(velocity.x) > 5.0 and is_on_floor()
+
+	if moving:
+		_play_anim("Walk")
+	else:
+		_play_anim("Idle")
+
+
+func _play_anim(name: String) -> void:
+	if not is_instance_valid(animated_sprite):
+		return
+	if animated_sprite.animation != name:
+		animated_sprite.play(name)
+
+
+# ---------- TARGETING / LOS / PROJECTILES ----------
 
 func _find_player() -> void:
 	# Player must be in the "Player" group (set this on your Player node)
@@ -203,10 +259,8 @@ func _has_line_of_sight_to_player() -> bool:
 
 	var result := space_state.intersect_ray(query)
 	if result.is_empty():
-		# nothing in the way
 		return true
 
-	# If the first thing hit is the player, we have line of sight
 	return result.get("collider") == player
 
 
@@ -235,7 +289,12 @@ func shoot_projectile_at_player() -> void:
 	get_tree().current_scene.add_child(projectile)
 
 
+# ---------- DAMAGE / DEATH ----------
+
 func take_damage(amount: int) -> void:
+	if is_dead:
+		return
+
 	health -= amount
 	if health < 0:
 		health = 0
@@ -244,8 +303,17 @@ func take_damage(amount: int) -> void:
 
 	if health == 0:
 		die()
+	else:
+		hurt_anim_timer = hurt_anim_duration
+		_play_anim("Hurt")
 
 
 func die() -> void:
-	# TODO: death animation / loot, etc.
+	if is_dead:
+		return
+	is_dead = true
+	velocity = Vector2.ZERO
+	_play_anim("Death")
+	# Let the death animation play, then remove
+	await get_tree().create_timer(death_anim_duration).timeout
 	queue_free()

@@ -47,7 +47,7 @@ var attack_anim_timer: float = 2.6
 var is_dead: bool = false
 
 @onready var wand: Node2D                 = $Wand
-@onready var animated_sprite: AnimatedSprite2D = $Sprite2D
+@onready var animated_sprite: AnimatedSprite2D = $AnimatedSprite2D
 @onready var obstacle_check: RayCast2D    = get_node_or_null("ObstacleCheck")
 @onready var audio_player: AudioStreamPlayer = $AudioStreamPlayer
 var obstacle_base_target: Vector2 = Vector2.ZERO
@@ -64,7 +64,7 @@ func _ready() -> void:
 		obstacle_base_target = obstacle_check.target_position
 
 	if animated_sprite:
-		animated_sprite.play("Idle")
+		animated_sprite.play("idle")
 
 
 func _physics_process(delta: float) -> void:
@@ -145,7 +145,7 @@ func _physics_process_ground(delta: float, to_player: Vector2, distance: float) 
 		shoot_projectile_at_player()
 		attack_cooldown_timer = attack_cooldown
 		attack_anim_timer = attack_anim_duration
-		_play_anim("Attack")
+		_play_anim("attack")
 
 	move_and_slide()
 	_update_animation_state()
@@ -188,7 +188,7 @@ func _physics_process_flying(delta: float, to_player: Vector2, distance: float) 
 		shoot_projectile_at_player()
 		attack_cooldown_timer = attack_cooldown
 		attack_anim_timer = attack_anim_duration
-		_play_anim("Attack")
+		_play_anim("attack")
 
 	move_and_slide()
 	_update_animation_state()
@@ -217,7 +217,7 @@ func _update_animation_state() -> void:
 
 	# If in attack anim window, keep attack
 	if attack_anim_timer > 0.0:
-		_play_anim("Attack")
+		_play_anim("attack")
 		return
 
 	# Base movement state: walk vs idle
@@ -228,9 +228,9 @@ func _update_animation_state() -> void:
 		moving = abs(velocity.x) > 5.0 and is_on_floor()
 
 	if moving:
-		_play_anim("Walk")
+		_play_anim("walk")
 	else:
-		_play_anim("Idle")
+		_play_anim("idle")
 
 
 func _play_anim(name: String) -> void:
@@ -309,7 +309,7 @@ func take_damage(amount: int) -> void:
 		die()
 	else:
 		hurt_anim_timer = hurt_anim_duration
-		_play_anim("Hurt")
+		_play_anim("hurt")
 	
 	var insult = await APIManager.ask_gemini("Give me a short mean insult one sentence and creative.")
 	print("Boss Text: ", insult)
@@ -323,7 +323,7 @@ func die() -> void:
 		return
 	is_dead = true
 	velocity = Vector2.ZERO
-	_play_anim("Death")
+	_play_anim("death")
 	# Let the death animation play, then remove
 	await get_tree().create_timer(death_anim_duration).timeout
 	queue_free()

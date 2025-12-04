@@ -301,7 +301,7 @@ animations = [{
 "duration": 1.0,
 "texture": SubResource("AtlasTexture_qp6mt")
 }],
-"loop": false,
+"loop": true,
 "name": &"idle",
 "speed": 10.0
 }, {
@@ -358,7 +358,7 @@ projectile_scene = ExtResource("2_g3jqs")
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
 position = Vector2(1, -12)
 sprite_frames = SubResource("SpriteFrames_idac6")
-animation = &"attack"
+animation = &"idle"
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 position = Vector2(1, -8)
@@ -372,4 +372,4 @@ position = Vector2(2, -9)
 target_position = Vector2(26, 0)
 
 [node name="AudioStreamPlayer" type="AudioStreamPlayer" parent="."]
-volume_db = 11.927
+volume_db = 12.0

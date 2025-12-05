@@ -46,7 +46,8 @@ func _preload_insults(count: int) -> void:
 		if not cleaned_insult.is_empty():
 			preloaded_insults.append(cleaned_insult)
 			
-	await ttsApi.preload_audio_batch(preloaded_insults)
+	# This Line is giving me issues v
+	# await ttsApi.preload_audio_batch(preloaded_insults)
 	
 
 # --- USAGE LOGIC (NEW) ---

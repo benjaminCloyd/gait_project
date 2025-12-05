@@ -11,7 +11,7 @@ config_version=5
 [application]
 
 config/name="GAIT_game"
-run/main_scene="res://scenes/Main.tscn"
+run/main_scene="uid://drpoutg47bt3x"
 config/features=PackedStringArray("4.5", "Forward Plus")
 config/icon="res://icon.svg"
 

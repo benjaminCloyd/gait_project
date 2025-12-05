@@ -1,6 +1,7 @@
-[gd_scene load_steps=2 format=3 uid="uid://drpoutg47bt3x"]
+[gd_scene load_steps=3 format=3 uid="uid://drpoutg47bt3x"]
 
 [ext_resource type="Script" uid="uid://ct80pr1p738c5" path="res://scenes/main_menu.gd" id="1_yqorp"]
+[ext_resource type="Texture2D" uid="uid://bgmheq1qlrnvm" path="res://sprites/GAITProject_TitleScreen.png" id="2_0ykhv"]
 
 [node name="Menu" type="Control"]
 layout_mode = 3
@@ -38,6 +39,12 @@ text = "Options"
 layout_mode = 2
 focus_neighbor_bottom = NodePath("../StartButton")
 text = "Quit"
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+z_index = -4096
+position = Vector2(579.62494, 326.625)
+scale = Vector2(0.7517904, 0.6394043)
+texture = ExtResource("2_0ykhv")
 
 [connection signal="pressed" from="VBoxContainer/StartButton" to="." method="_on_start_button_pressed"]
 [connection signal="pressed" from="VBoxContainer/QuitButton" to="." method="_on_quit_button_pressed"]

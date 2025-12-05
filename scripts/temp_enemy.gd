@@ -212,7 +212,7 @@ func _update_animation_state() -> void:
 
 	# If in hurt anim window, keep hurt
 	if hurt_anim_timer > 0.0:
-		_play_anim("Hurt")
+		_play_anim("hurt")
 		return
 
 	# If in attack anim window, keep attack

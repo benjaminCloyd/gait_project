@@ -309,13 +309,16 @@ func take_damage(amount: int) -> void:
 		die()
 	else:
 		hurt_anim_timer = hurt_anim_duration
-		_play_anim("hurt")
+		#_play_anim("hurt")
 	
-	var insult = await APIManager.ask_gemini("Give me a short mean insult one sentence and creative.")
-	print("Boss Text: ", insult)
+	
+	#------------API CALLS---------------
+	
+	#var insult = APIManager.get_preloaded_insult()
+	#print("Boss Text: ", insult)
 	# 2. Speak the text using the TTS Manager
 	# This call is correct as GoogleTTSManager handles the speaking logic.
-	await ttsApi.speak_text(insult, audio_player)
+	#await ttsApi.play_next_preloaded_insult(audio_player)
 	
 
 func die() -> void:

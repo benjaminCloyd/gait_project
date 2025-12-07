@@ -146,7 +146,7 @@ func _physics_process_ground(delta: float, to_player: Vector2, distance: float) 
 		attack_cooldown_timer = attack_cooldown
 		attack_anim_timer = attack_anim_duration
 		_play_anim("attack")
-		ttsApi.play_next_preloaded_insult(audio_player)
+		#ttsApi.play_next_preloaded_insult(audio_player)
 
 	move_and_slide()
 	_update_animation_state()
@@ -190,7 +190,7 @@ func _physics_process_flying(delta: float, to_player: Vector2, distance: float) 
 		attack_cooldown_timer = attack_cooldown
 		attack_anim_timer = attack_anim_duration
 		_play_anim("attack")
-		ttsApi.play_next_preloaded_insult(audio_player)
+		#ttsApi.play_next_preloaded_x(audio_player)
 
 	move_and_slide()
 	_update_animation_state()
@@ -290,6 +290,7 @@ func shoot_projectile_at_player() -> void:
 	projectile.velocity = dir * projectile_speed
 	projectile.shooter  = self
 	projectile.damage   = projectile_damage
+	projectile.Insult = true
 
 	get_tree().current_scene.add_child(projectile)
 

@@ -2,11 +2,14 @@ extends Area2D
 
 @export var damage: int = 10
 @export var hit_particles_scene: PackedScene
+@export var Enemy: Node
 
 var velocity: Vector2 = Vector2.ZERO
 var shooter: Node = null
+var Insult: bool = false
 
 @onready var trail_particles: CPUParticles2D = $TrailParticles
+@onready var audio_player: AudioStreamPlayer = $AudioStreamPlayer
 
 
 func _ready() -> void:
@@ -32,11 +35,18 @@ func _on_body_entered(body: Node) -> void:
 	# Deal damage if possible
 	if body.has_method("take_damage"):
 		body.take_damage(damage)
+		if Insult:
+			ttsApi.play_next_preloaded_insult(audio_player)
+			
 
 	# Spawn hit particles at the collision point
 	_spawn_hit_particles()
-
+	$Sprite2D.visible=false
+	$CollisionShape2D.disabled=true
+	$TrailParticles.visible=false
+	$PointLight2D.visible=false
 	# Remove projectile
+	await audio_player.finished
 	queue_free()
 
 

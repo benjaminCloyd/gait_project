@@ -1,8 +1,24 @@
-[gd_scene load_steps=8 format=3 uid="uid://bb7hjqx3dnffp"]
+[gd_scene load_steps=9 format=3 uid="uid://bb7hjqx3dnffp"]
 
 [ext_resource type="Texture2D" uid="uid://dj15rdd7upt2m" path="res://Sprites/TempTileset.png" id="1_83503"]
 [ext_resource type="Script" uid="uid://dsryk7bnnp6o3" path="res://scripts/temp_projectile.gd" id="1_e4qt0"]
 [ext_resource type="PackedScene" uid="uid://dqrf3fdb7m4hu" path="res://scenes/hit_particles.tscn" id="2_02rlt"]
+
+[sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_02rlt"]
+particle_flag_disable_z = true
+emission_shape_scale = Vector3(3, 1, 1)
+emission_shape = 1
+emission_sphere_radius = 3.3
+angle_min = 1.0728835e-05
+angle_max = 360.00003
+gravity = Vector3(0, 0, 0)
+scale_min = 2.0
+scale_max = 2.0
+color = Color(0.25882354, 1, 1, 1)
+hue_variation_min = -0.100000024
+hue_variation_max = 0.079999976
+sub_emitter_mode = 1
+sub_emitter_frequency = 4.0
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_e4qt0"]
 size = Vector2(17, 16)
@@ -26,9 +42,14 @@ script = ExtResource("1_e4qt0")
 hit_particles_scene = ExtResource("2_02rlt")
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
+visible = false
 texture = ExtResource("1_83503")
 region_enabled = true
 region_rect = Rect2(63.321198, 127.08728, 16.678802, 16.91272)
+
+[node name="GPUParticles2D" type="GPUParticles2D" parent="."]
+amount = 64
+process_material = SubResource("ParticleProcessMaterial_02rlt")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 position = Vector2(0.5, 1)
@@ -40,14 +61,14 @@ amount = 128
 lifetime = 0.5
 randomness = 0.1
 emission_shape = 1
-emission_sphere_radius = 10.4
+emission_sphere_radius = 7.5
 gravity = Vector2(0, 0)
 initial_velocity_max = 10.0
 linear_accel_min = -26.8
 linear_accel_max = 3.09
 angle_min = -90.0
 angle_max = -81.0
-color = Color(0.9764706, 0.6117647, 0.050980393, 1)
+color = Color(0.25882354, 1, 1, 1)
 hue_variation_min = -0.54
 hue_variation_max = 0.89
 hue_variation_curve = SubResource("Curve_e4qt0")

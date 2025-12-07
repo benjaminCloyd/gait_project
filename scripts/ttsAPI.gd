@@ -25,7 +25,7 @@ func preload_audio_batch(text_list: Array[String]) -> void:
 		
 		if stream != null:
 			preloaded_streams.append(stream)
-			print("TTS: Preloaded audio for -> ", text.left(20), "...")
+			print("TTS: Preloaded audio for -> ", text.left(30), "...")
 		else:
 			push_error("TTS: Failed to generate audio for: " + text)
 			

@@ -3,7 +3,7 @@ extends CharacterBody2D
 signal health_changed(current: int, max_value: int)
 
 # --- STATS / TUNING ---
-@export var max_health: int = 50
+@export var max_health: int = 200
 @export var move_speed: float = 70.0
 
 @export var projectile_scene: PackedScene
@@ -32,7 +32,7 @@ signal health_changed(current: int, max_value: int)
 @export var death_anim_duration: float = 0.6
 
 var health: int
-var attack_cooldown_timer: float = 3.0
+var attack_cooldown_timer: float = 10.0
 var gravity: float = ProjectSettings.get_setting("physics/2d/default_gravity")
 
 # Player reference (auto-detected via group "Player")
@@ -146,6 +146,7 @@ func _physics_process_ground(delta: float, to_player: Vector2, distance: float) 
 		attack_cooldown_timer = attack_cooldown
 		attack_anim_timer = attack_anim_duration
 		_play_anim("attack")
+		ttsApi.play_next_preloaded_insult(audio_player)
 
 	move_and_slide()
 	_update_animation_state()
@@ -189,6 +190,7 @@ func _physics_process_flying(delta: float, to_player: Vector2, distance: float) 
 		attack_cooldown_timer = attack_cooldown
 		attack_anim_timer = attack_anim_duration
 		_play_anim("attack")
+		ttsApi.play_next_preloaded_insult(audio_player)
 
 	move_and_slide()
 	_update_animation_state()

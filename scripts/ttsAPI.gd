@@ -4,6 +4,7 @@ var api_key: String = ""
 var tts_url := "https://texttospeech.googleapis.com/v1/text:synthesize"
 var voice_name := "en-US-Standard-A" 
 var language_code := "en-US"
+signal buffer_low
 
 # Storage for the preloaded audio files
 var preloaded_streams: Array[AudioStreamMP3] = []
@@ -41,6 +42,13 @@ func play_next_preloaded_insult(player: AudioStreamPlayer) -> bool:
 		
 	# Pop the first stream off the array
 	var stream = preloaded_streams.pop_front()
+	
+	# --- NEW LOGIC: CHECK BUFFER ---
+	# If we have 2 or fewer insults left, ask API for more
+	if preloaded_streams.size() <= 2:
+		print("TTS: Buffer is low (", preloaded_streams.size(), " left). Requesting refill...")
+		emit_signal("buffer_low")
+	# -------------------------------
 	
 	if is_instance_valid(player):
 		player.stream = stream

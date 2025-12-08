@@ -391,7 +391,7 @@ process_mode = 1
 [node name="AudioStreamPlayer" type="AudioStreamPlayer" parent="."]
 process_mode = 1
 stream = ExtResource("3_rarhs")
-volume_db = 0.75
+volume_db = 0.05
 autoplay = true
 script = ExtResource("4_vcsgt")
 

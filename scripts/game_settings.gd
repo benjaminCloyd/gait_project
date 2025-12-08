@@ -1,12 +1,21 @@
 extends Node
 
-var voice_level := 1
-var mean_level := 1
+var tts_explicit: bool = false
+var mean_level: int = 3
 
-var voice_map := {
-	1: "en-US-Standard-A",
-	2: "en-US-Standard-B",
-	3: "en-US-Neural2-C",
-	4: "en-GB-Standard-D",
-	5: "en-US-Journey-D"
-}
+func _ready():
+	load_settings()
+
+func save_settings():
+	var config = ConfigFile.new()
+	config.set_value("audio", "tts_explicit", tts_explicit)
+	config.set_value("audio", "mean_level", mean_level)
+	config.save("user://settings.cfg")
+	print("Settings saved!")
+
+func load_settings():
+	var config = ConfigFile.new()
+	if config.load("user://settings.cfg") == OK:
+		tts_explicit = config.get_value("audio", "tts_explicit", false)
+		mean_level = config.get_value("audio", "mean_level", 3)
+		print("Settings loaded!")

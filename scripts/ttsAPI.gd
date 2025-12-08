@@ -2,7 +2,7 @@ extends Node
 
 var api_key: String = ""
 var tts_url := "https://texttospeech.googleapis.com/v1/text:synthesize"
-var voice_name := "en-US-Standard-A" 
+var voice_name := "en-GB-Standard-B" 
 var language_code := "en-US"
 signal buffer_low
 
@@ -71,13 +71,13 @@ func _generate_audio_stream(text_to_speak: String) -> AudioStreamMP3:
 	var final_url = tts_url + "?key=" + api_key
 	var headers = ["Content-Type: application/json"]
 
-	var selected_voice = GameSettings.voice_map[GameSettings.voice_level]
+	#var selected_voice = GameSettings.voice_map[GameSettings.voice_level]
 
 	var body = JSON.stringify({
 		"input": { "text": text_to_speak },
 		"voice": {
 			"languageCode": language_code,
-			"name": selected_voice
+			"name": voice_name
 		},
 		"audioConfig": {
 			"audioEncoding": "MP3"

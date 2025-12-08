@@ -1,5 +1,4 @@
 extends Node
-
 var API_KEY: String = ""
 var url: String = ""
 const DELIMITER = "###" 
@@ -13,7 +12,6 @@ func _ready() -> void:
 	if API_KEY.is_empty():
 		push_error("CRITICAL ERROR: Gemini API Key missing.")
 		return
-
 	url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=" + API_KEY
 	
 	# --- NEW: CONNECT TO TTS SIGNAL ---
@@ -25,25 +23,33 @@ func _ready() -> void:
 	#await _preload_insults(5) 
 	print("apiManager ready: No insults preloaded yet.")
 
-
-
 # Triggered when TTS says it is running out of audio
 func _on_tts_buffer_low():
 	if not is_loading:
 		print("API: Received low buffer signal. Refilling...")
 		_preload_insults(5) # Fetch 5 more
 
-
 func _preload_insults(count: int) -> void:
 	is_loading = true
-	var prompt = "You ar a boss in a video that insults the player when you hit them. Give me exactly %d short one sentence insults with meanness level %d out of 5. Each insult must be separated by %s." % [
-	count,
-	GameSettings.mean_level,
-	DELIMITER
-]
-
+	
+	# Build the prompt based on explicit setting
+	var explicit_instruction = ""
+	if GameSettings.tts_explicit:
+		print("explicit")
+		explicit_instruction = "Be explicit and use profanity/cursing in your insults. "
+	else:
+		print("clean")
+		explicit_instruction = "Keep the insults clean without profanity or explicit language. "
+	
+	print(GameSettings.mean_level)
+	var prompt = "You are a boss in a video game that insults the player when you hit them. %sGive me exactly %d short one-sentence insults with meanness level %d out of 5. Each insult must be separated by %s." % [
+		explicit_instruction,
+		count,
+		GameSettings.mean_level,
+		DELIMITER
+	]
+	
 	var raw_response = await ask_gemini(prompt)
-
 	if raw_response.begins_with("Error"):
 		push_error("Preload Failed: " + raw_response)
 		is_loading = false
@@ -65,11 +71,9 @@ func _preload_insults(count: int) -> void:
 	
 	is_loading = false
 
-
 func ask_gemini(prompt_text: String) -> String:
 	if API_KEY.is_empty():
 		return "Error: No API Key."
-
 	var new_request = HTTPRequest.new()
 	add_child(new_request)
 	
@@ -95,6 +99,5 @@ func ask_gemini(prompt_text: String) -> String:
 			result_text = json["candidates"][0]["content"]["parts"][0]["text"]
 	else:
 		result_text = "Server Error: " + str(response_code)
-
 	new_request.queue_free()
 	return result_text

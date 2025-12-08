@@ -1,6 +1,6 @@
 [gd_scene load_steps=3 format=3 uid="uid://drpoutg47bt3x"]
 
-[ext_resource type="Script" uid="uid://ct80pr1p738c5" path="res://scenes/main_menu.gd" id="1_yqorp"]
+[ext_resource type="Script" uid="uid://ct80pr1p738c5" path="res://scripts/main_menu.gd" id="1_yqorp"]
 [ext_resource type="Texture2D" uid="uid://bgmheq1qlrnvm" path="res://Sprites/GAITProject_TitleScreen.png" id="2_0ykhv"]
 
 [node name="Menu" type="Control"]
@@ -58,37 +58,31 @@ size_flags_vertical = 3
 size_flags_stretch_ratio = 0.0
 color = Color(0.29954746, 0.29954746, 0.29954743, 1)
 
-[node name="VoiceSlider" type="HSlider" parent="ColorRect"]
+[node name="ExplicitCheck" type="CheckBox" parent="ColorRect"]
 layout_mode = 0
 offset_left = 13.0
 offset_top = 58.0
 offset_right = 322.0
-offset_bottom = 74.0
-min_value = 1.0
-max_value = 5.0
-value = 1.0
-tick_count = 5
-ticks_on_borders = true
+offset_bottom = 82.0
 
-[node name="VoiceLabel" type="Label" parent="ColorRect"]
+[node name="ExplicitLabel" type="Label" parent="ColorRect"]
 layout_mode = 0
 offset_left = 15.0
 offset_top = 23.0
 offset_right = 146.0
 offset_bottom = 47.0
-text = "Voices Options"
+text = "Explicit Option"
 
 [node name="MeanSlider" type="HSlider" parent="ColorRect"]
 layout_mode = 0
 offset_left = 13.0
 offset_top = 154.0
 offset_right = 322.0
-offset_bottom = 170.0
+offset_bottom = 178.0
 min_value = 1.0
 max_value = 5.0
 value = 1.0
 tick_count = 5
-ticks_on_borders = true
 
 [node name="MeanLabel" type="Label" parent="ColorRect"]
 layout_mode = 0
@@ -96,7 +90,7 @@ offset_left = 13.0
 offset_top = 119.0
 offset_right = 144.0
 offset_bottom = 143.0
-text = "Meaness Option"
+text = "Mean  Option"
 
 [node name="ExitButton" type="Button" parent="ColorRect"]
 layout_mode = 0
@@ -109,6 +103,6 @@ text = "Exit"
 [connection signal="pressed" from="VBoxContainer/StartButton" to="." method="_on_start_button_pressed"]
 [connection signal="pressed" from="VBoxContainer/OptionsButton" to="." method="_on_options_button_pressed"]
 [connection signal="pressed" from="VBoxContainer/QuitButton" to="." method="_on_quit_button_pressed"]
-[connection signal="value_changed" from="ColorRect/VoiceSlider" to="." method="_on_voice_slider_value_changed"]
-[connection signal="value_changed" from="ColorRect/MeanSlider" to="." method="_on_mean_slider_value_changed"]
+[connection signal="toggled" from="ColorRect/ExplicitCheck" to="." method="_on_explicit_check_box_toggled"]
+[connection signal="value_changed" from="ColorRect/MeanSlider" to="." method="_mean_slider_value_changed"]
 [connection signal="pressed" from="ColorRect/ExitButton" to="." method="_on_exit_button_pressed"]

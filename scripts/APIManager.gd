@@ -30,7 +30,7 @@ func _ready() -> void:
 func _on_tts_buffer_low():
 	if not is_loading:
 		print("API: Received low buffer signal. Refilling...")
-		_preload_insults(3) # Fetch 3 more
+		_preload_insults(5) # Fetch 5 more
 
 
 func _preload_insults(count: int) -> void:

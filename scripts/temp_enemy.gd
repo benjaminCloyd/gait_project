@@ -11,8 +11,8 @@ signal health_changed(current: int, max_value: int)
 @export var projectile_damage: int = 8
 
 @export var attack_cooldown: float = 0.8      # seconds between shots
-@export var attack_range: float = 70.0       # will shoot when distance <= this
-@export var min_distance: float = 50.0       # prefers to stay at least this far
+@export var attack_range: float = 70.0        # will shoot when distance <= this
+@export var min_distance: float = 50.0        # prefers to stay at least this far
 @export var detection_radius: float = 500.0   # starts reacting when player is within this
 
 # Ground movement / jumping
@@ -26,13 +26,18 @@ signal health_changed(current: int, max_value: int)
 @export var require_line_of_sight: bool = true
 @export var los_collision_mask: int = 1       # which layers block LOS (walls, etc.)
 
-# Animation timing
+# (Not used directly anymore; timing comes from animation length)
 @export var hurt_anim_duration: float = 0.25
 @export var attack_anim_duration: float = 0.35
 @export var death_anim_duration: float = 0.6
 
+# Frame of the "attack" animation when the projectile should spawn
+# (0-based index; tweak in Inspector)
+@export var attack_fire_frame: int = 2
+
 var health: int
-var attack_cooldown_timer: float = 10.0
+# Start with one full cooldown so it doesn't attack immediately on spawn
+var attack_cooldown_timer: float = 0.0
 var gravity: float = ProjectSettings.get_setting("physics/2d/default_gravity")
 
 # Player reference (auto-detected via group "Player")
@@ -41,18 +46,20 @@ var player: CharacterBody2D = null
 # Flying strafe direction (1 = clockwise, -1 = counter-clockwise)
 var fly_strafe_dir: float = 1.0
 
-# Animation state
-var hurt_anim_timer: float = 0.6
-var attack_anim_timer: float = 2.6
+# Animation state flags
+var is_attacking: bool = false
+var is_hurting: bool = false
 var is_dead: bool = false
+var has_fired_this_attack: bool = false       # to avoid double-firing in one animation
 
-@onready var wand: Node2D                 = $Wand
+@onready var wand: Node2D                      = $Wand
 @onready var animated_sprite: AnimatedSprite2D = $AnimatedSprite2D
-@onready var obstacle_check: RayCast2D    = get_node_or_null("ObstacleCheck")
-@onready var audio_player: AudioStreamPlayer = $AudioStreamPlayer
+@onready var obstacle_check: RayCast2D         = get_node_or_null("ObstacleCheck")
+@onready var tts_audio_player: AudioStreamPlayer = get_node_or_null("AudioStreamPlayer") # if you still have this
+@onready var hit_sound_player: AudioStreamPlayer = $HitSound
+@onready var attack_sound_player: AudioStreamPlayer = $AttackSound
+
 var obstacle_base_target: Vector2 = Vector2.ZERO
-
-
 
 
 func _ready() -> void:
@@ -65,6 +72,12 @@ func _ready() -> void:
 
 	if animated_sprite:
 		animated_sprite.play("idle")
+		# IMPORTANT: attack/hurt/death must have Loop OFF
+		animated_sprite.animation_finished.connect(_on_anim_finished)
+		animated_sprite.frame_changed.connect(_on_anim_frame_changed)
+	
+	# Optional: initial delay before first attack
+	attack_cooldown_timer = attack_cooldown
 
 
 func _physics_process(delta: float) -> void:
@@ -77,13 +90,9 @@ func _physics_process(delta: float) -> void:
 		if player == null or not is_instance_valid(player):
 			return
 
-	# Timers
+	# Cooldown timer
 	if attack_cooldown_timer > 0.0:
 		attack_cooldown_timer -= delta
-	if hurt_anim_timer > 0.0:
-		hurt_anim_timer -= delta
-	if attack_anim_timer > 0.0:
-		attack_anim_timer -= delta
 
 	var to_player: Vector2 = player.global_position - global_position
 	var distance: float = to_player.length()
@@ -139,14 +148,18 @@ func _physics_process_ground(delta: float, to_player: Vector2, distance: float) 
 		if obstacle_check.is_colliding():
 			velocity.y = jump_velocity
 
-	# Attack AI
+	# Attack AI – just start the attack, don't shoot yet
 	var has_los := not require_line_of_sight or _has_line_of_sight_to_player()
-	if distance <= attack_range and attack_cooldown_timer <= 0.0 and has_los:
-		shoot_projectile_at_player()
+	if distance <= attack_range \
+	and attack_cooldown_timer <= 0.0 \
+	and has_los \
+	and not is_attacking \
+	and not is_hurting:
 		attack_cooldown_timer = attack_cooldown
-		attack_anim_timer = attack_anim_duration
+		is_attacking = true
+		has_fired_this_attack = false
+		_play_attack_sound()
 		_play_anim("attack")
-		#ttsApi.play_next_preloaded_insult(audio_player)
 
 	move_and_slide()
 	_update_animation_state()
@@ -184,13 +197,17 @@ func _physics_process_flying(delta: float, to_player: Vector2, distance: float) 
 	if velocity.x != 0.0:
 		_update_facing(sign(velocity.x))
 
-	# Attack AI
-	if distance <= attack_range and attack_cooldown_timer <= 0.0 and has_los:
-		shoot_projectile_at_player()
+	# Attack AI – just start the attack, don't shoot yet
+	if distance <= attack_range \
+	and attack_cooldown_timer <= 0.0 \
+	and has_los \
+	and not is_attacking \
+	and not is_hurting:
 		attack_cooldown_timer = attack_cooldown
-		attack_anim_timer = attack_anim_duration
+		is_attacking = true
+		has_fired_this_attack = false
+		
 		_play_anim("attack")
-		#ttsApi.play_next_preloaded_x(audio_player)
 
 	move_and_slide()
 	_update_animation_state()
@@ -209,16 +226,20 @@ func _update_facing(direction: float) -> void:
 
 
 func _update_animation_state() -> void:
-	if not is_instance_valid(animated_sprite) or is_dead:
+	if not is_instance_valid(animated_sprite):
 		return
 
-	# If in hurt anim window, keep hurt
-	if hurt_anim_timer > 0.0:
+	# Death overrides everything
+	if is_dead:
+		_play_anim("death")
+		return
+
+	# Hurt / attack are uninterruptible while active
+	if is_hurting:
 		_play_anim("hurt")
 		return
 
-	# If in attack anim window, keep attack
-	if attack_anim_timer > 0.0:
+	if is_attacking:
 		_play_anim("attack")
 		return
 
@@ -242,6 +263,57 @@ func _play_anim(name: String) -> void:
 		animated_sprite.play(name)
 
 
+# Called when any non-looping animation finishes
+func _on_anim_finished() -> void:
+	if not is_instance_valid(animated_sprite):
+		return
+
+	match animated_sprite.animation:
+		"attack":
+			is_attacking = false
+			has_fired_this_attack = false
+		"hurt":
+			is_hurting = false
+		"death":
+			if is_dead:
+				queue_free()
+
+
+# Called every time the frame changes
+func _on_anim_frame_changed() -> void:
+	if not is_instance_valid(animated_sprite):
+		return
+
+	# Only care while we're attacking
+	if not is_attacking:
+		return
+
+	if animated_sprite.animation != "attack":
+		return
+
+	# Already fired this attack? Do nothing.
+	if has_fired_this_attack:
+		return
+
+	# When we reach the chosen frame, spawn the projectile
+	if animated_sprite.frame == attack_fire_frame:
+		shoot_projectile_at_player()
+		_play_attack_sound()
+		has_fired_this_attack = true
+
+
+# ---------- SOUND HELPERS ----------
+
+func _play_hit_sound() -> void:
+	if is_instance_valid(hit_sound_player):
+		hit_sound_player.play()
+
+
+func _play_attack_sound() -> void:
+	if is_instance_valid(attack_sound_player):
+		attack_sound_player.play()
+
+
 # ---------- TARGETING / LOS / PROJECTILES ----------
 
 func _find_player() -> void:
@@ -250,7 +322,7 @@ func _find_player() -> void:
 	if players.size() > 0:
 		var candidate = players[0]
 		if candidate is CharacterBody2D:
-			player = candidate
+			player = candidate as CharacterBody2D
 
 
 func _has_line_of_sight_to_player() -> bool:
@@ -290,7 +362,7 @@ func shoot_projectile_at_player() -> void:
 	projectile.velocity = dir * projectile_speed
 	projectile.shooter  = self
 	projectile.damage   = projectile_damage
-	projectile.Insult = true
+	projectile.Insult   = true
 
 	get_tree().current_scene.add_child(projectile)
 
@@ -298,7 +370,6 @@ func shoot_projectile_at_player() -> void:
 # ---------- DAMAGE / DEATH ----------
 
 func take_damage(amount: int) -> void:
-	
 	if is_dead:
 		return
 
@@ -311,18 +382,10 @@ func take_damage(amount: int) -> void:
 	if health == 0:
 		die()
 	else:
-		hurt_anim_timer = hurt_anim_duration
-		#_play_anim("hurt")
-	
-	
-	#------------API CALLS---------------
-	
-	#var insult = APIManager.get_preloaded_insult()
-	#print("Boss Text: ", insult)
-	# 2. Speak the text using the TTS Manager
-	# This call is correct as GoogleTTSManager handles the speaking logic.
-	#await ttsApi.play_next_preloaded_insult(audio_player)
-	
+		is_hurting = true
+		_play_hit_sound()
+		_play_anim("hurt")
+
 
 func die() -> void:
 	if is_dead:
@@ -330,11 +393,4 @@ func die() -> void:
 	is_dead = true
 	velocity = Vector2.ZERO
 	_play_anim("death")
-	# Let the death animation play, then remove
-	await get_tree().create_timer(death_anim_duration).timeout
-	queue_free()
-
-
-# Inside your Boss.gd
-
-# Boss.gd (Corrected)
+	# Free happens in _on_anim_finished()

@@ -46,5 +46,58 @@ position = Vector2(579.62494, 326.625)
 scale = Vector2(0.7517904, 0.6394043)
 texture = ExtResource("2_0ykhv")
 
+[node name="ColorRect" type="ColorRect" parent="."]
+z_index = -260
+layout_mode = 0
+offset_left = 335.0
+offset_top = 152.0
+offset_right = 840.5
+offset_bottom = 489.5
+size_flags_vertical = 3
+size_flags_stretch_ratio = 0.0
+color = Color(0, 0, 0, 1)
+
+[node name="HSlider" type="HSlider" parent="ColorRect"]
+layout_mode = 0
+offset_left = 13.0
+offset_top = 58.0
+offset_right = 322.0
+offset_bottom = 74.0
+step = 10.0
+
+[node name="Label" type="Label" parent="ColorRect"]
+layout_mode = 0
+offset_left = 15.0
+offset_top = 23.0
+offset_right = 146.0
+offset_bottom = 47.0
+text = "Voices Options"
+
+[node name="HSlider2" type="HSlider" parent="ColorRect"]
+layout_mode = 0
+offset_left = 13.0
+offset_top = 154.0
+offset_right = 322.0
+offset_bottom = 170.0
+step = 10.0
+
+[node name="Label2" type="Label" parent="ColorRect"]
+layout_mode = 0
+offset_left = 13.0
+offset_top = 119.0
+offset_right = 144.0
+offset_bottom = 143.0
+text = "Meaness Option"
+
+[node name="ExitButton" type="Button" parent="ColorRect"]
+layout_mode = 0
+offset_left = 449.0
+offset_top = 292.0
+offset_right = 486.0
+offset_bottom = 323.0
+text = "Exit"
+
 [connection signal="pressed" from="VBoxContainer/StartButton" to="." method="_on_start_button_pressed"]
+[connection signal="pressed" from="VBoxContainer/OptionsButton" to="." method="_on_options_button_pressed"]
 [connection signal="pressed" from="VBoxContainer/QuitButton" to="." method="_on_quit_button_pressed"]
+[connection signal="pressed" from="ColorRect/ExitButton" to="." method="_on_exit_button_pressed"]

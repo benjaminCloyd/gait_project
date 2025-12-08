@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://bgmheq1qlrnvm"
-path="res://.godot/imported/GAITProject_TitleScreen.png-1b9a8caec0ae10fadf12f7ca8dd3f8ac.ctex"
+path="res://.godot/imported/GAITProject_TitleScreen.png-34a9946cde81f6b541ab2cff70ef2bd1.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Sprites/GAITProject_TitleScreen.png"
-dest_files=["res://.godot/imported/GAITProject_TitleScreen.png-1b9a8caec0ae10fadf12f7ca8dd3f8ac.ctex"]
+source_file="res://sprites/GAITProject_TitleScreen.png"
+dest_files=["res://.godot/imported/GAITProject_TitleScreen.png-34a9946cde81f6b541ab2cff70ef2bd1.ctex"]
 
 [params]
 

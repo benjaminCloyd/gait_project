@@ -1,7 +1,11 @@
-[gd_scene load_steps=9 format=3 uid="uid://buopsyna4ftlc"]
+[gd_scene load_steps=13 format=3 uid="uid://buopsyna4ftlc"]
 
 [ext_resource type="Script" uid="uid://8hgmnr3v1qsp" path="res://scripts/Player.gd" id="1_cx0t2"]
 [ext_resource type="Texture2D" uid="uid://b7fh7y7eg71ut" path="res://Sprites/TempPlayer.png" id="1_yod02"]
+[ext_resource type="AudioStream" uid="uid://c86iru2cpxl0q" path="res://Sounds/sword.mp3" id="3_70d11"]
+[ext_resource type="AudioStream" uid="uid://crrbpe8ndw7pg" path="res://Sounds/userHit.mp3" id="4_cw2d6"]
+[ext_resource type="AudioStream" uid="uid://b4eww2nw4wmoa" path="res://Sounds/UserFootsteps.mp3" id="5_khinc"]
+[ext_resource type="AudioStream" uid="uid://11j2ptfkma0d" path="res://Sounds/userJumps.mp3" id="6_bruh7"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_uxnck"]
 atlas = ExtResource("1_yod02")
@@ -59,3 +63,17 @@ shape = SubResource("CapsuleShape2D_v6fml")
 
 [node name="Wand" type="Node2D" parent="."]
 position = Vector2(0, -5)
+
+[node name="AttackSound" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("3_70d11")
+
+[node name="HitSound" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("4_cw2d6")
+
+[node name="WalkSound" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("5_khinc")
+parameters/looping = false
+
+[node name="JumpSound" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("6_bruh7")
+pitch_scale = 1.5

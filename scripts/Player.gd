@@ -38,6 +38,12 @@ var gravity: float = ProjectSettings.get_setting("physics/2d/default_gravity")
 @onready var wand: Node2D   = $Wand
 @onready var sprite: Node2D = $AnimatedSprite2D   # change this path if your sprite node is named differently
 
+# --- AUDIO ---
+@onready var attack_sound: AudioStreamPlayer = get_node_or_null("AttackSound")
+@onready var hit_sound: AudioStreamPlayer    = get_node_or_null("HitSound")
+@onready var walk_sound: AudioStreamPlayer   = get_node_or_null("WalkSound")
+@onready var jump_sound: AudioStreamPlayer   = get_node_or_null("JumpSound")
+
 
 func _ready() -> void:
 	health = max_health
@@ -77,14 +83,19 @@ func _physics_process(delta: float) -> void:
 	if Input.is_action_just_pressed("move_jump") and jumps_left > 0:
 		velocity.y = JUMP_VELOCITY
 		jumps_left -= 1
+		_play_jump_sound()
 
 	# --- horizontal movement + sprite flip ---
 	var direction := Input.get_axis("move_Left", "move_Right")
-	if direction != 0.0:
+	var is_moving_horiz: bool = direction != 0.0
+
+	if is_moving_horiz:
 		velocity.x = direction * SPEED
 		_update_facing(direction)
 	else:
 		velocity.x = move_toward(velocity.x, 0.0, SPEED)
+
+	_handle_walk_sound(is_moving_horiz)
 
 	# --- attack input ---
 	if Input.is_action_just_pressed("attack"):
@@ -102,6 +113,35 @@ func _update_facing(direction: float) -> void:
 	elif direction < 0.0:
 		sprite.scale.x = -abs(sprite.scale.x)  # face left
 
+
+# ---------- AUDIO HELPERS ----------
+
+func _play_attack_sound() -> void:
+	if is_instance_valid(attack_sound):
+		attack_sound.play()
+
+func _play_hit_sound() -> void:
+	if is_instance_valid(hit_sound):
+		hit_sound.play()
+
+func _play_jump_sound() -> void:
+	if is_instance_valid(jump_sound):
+		jump_sound.play()
+
+func _handle_walk_sound(is_moving_horiz: bool) -> void:
+	if not is_instance_valid(walk_sound):
+		return
+
+	# footsteps only when moving on the ground
+	if is_moving_horiz and is_on_floor():
+		if not walk_sound.playing:
+			walk_sound.play()
+	else:
+		if walk_sound.playing:
+			walk_sound.stop()
+
+
+# ---------- ATTACK ----------
 
 func try_attack() -> void:
 	if attack_cooldown_timer > 0.0:
@@ -122,6 +162,7 @@ func try_attack() -> void:
 	mana_regen_cooldown = mana_regen_delay
 	attack_cooldown_timer = attack_cooldown
 
+	_play_attack_sound()
 	shoot_projectile()
 
 
@@ -146,7 +187,11 @@ func shoot_projectile() -> void:
 	get_tree().current_scene.add_child(projectile)
 
 
+# ---------- DAMAGE / MANA RESTORE ----------
+
 func take_damage(amount: int) -> void:
+	_play_hit_sound()
+
 	health -= amount
 	if health < 0:
 		health = 0

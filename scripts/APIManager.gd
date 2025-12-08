@@ -35,7 +35,7 @@ func _on_tts_buffer_low():
 
 func _preload_insults(count: int) -> void:
 	is_loading = true
-	var prompt = "Give me exactly " + str(count) + " short, evil boss insults for a player who missed an attack. Separate each insult with the unique delimiter: " + DELIMITER
+	var prompt = "Give me exactly " + str(count) + " short, evil boss insults for when they attack the player. Separate each insult with the unique delimiter: " + DELIMITER
 
 	var raw_response = await ask_gemini(prompt)
 

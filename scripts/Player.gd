@@ -33,16 +33,31 @@ var _mana_regen_buffer: float = 0.0
 @export var projectile_damage: int = 10
 var attack_cooldown_timer: float = 0.0
 
+# Attack animation timing
+@export var attack_fire_frame: int = 3        # frame where projectile spawns (0-based)
+@export var attack_anim_duration: float = 1
+var attack_anim_timer: float = 0.0
+
+# Hurt animation timing
+@export var hurt_anim_duration: float = 0.4
+var hurt_anim_timer: float = 0.0
+
 var gravity: float = ProjectSettings.get_setting("physics/2d/default_gravity")
 
-@onready var wand: Node2D   = $Wand
-@onready var sprite: Node2D = $AnimatedSprite2D   # change this path if your sprite node is named differently
+@onready var wand: Node2D = $Wand
+@onready var sprite: AnimatedSprite2D = $AnimatedSprite2D
 
 # --- AUDIO ---
 @onready var attack_sound: AudioStreamPlayer = get_node_or_null("AttackSound")
 @onready var hit_sound: AudioStreamPlayer    = get_node_or_null("HitSound")
 @onready var walk_sound: AudioStreamPlayer   = get_node_or_null("WalkSound")
 @onready var jump_sound: AudioStreamPlayer   = get_node_or_null("JumpSound")
+
+# --- ANIMATION STATE FLAGS ---
+var is_attacking: bool = false
+var is_hurting: bool = false
+var is_dead: bool = false
+var has_fired_this_attack: bool = false
 
 
 func _ready() -> void:
@@ -53,11 +68,29 @@ func _ready() -> void:
 	emit_signal("health_changed", health, max_health)
 	emit_signal("mana_changed", mana, max_mana)
 
+	if is_instance_valid(sprite):
+		sprite.play("idle")
+		# We only need frame_changed (timers handle end of states)
+		sprite.frame_changed.connect(_on_anim_frame_changed)
+
 
 func _physics_process(delta: float) -> void:
 	# --- attack cooldown ---
 	if attack_cooldown_timer > 0.0:
 		attack_cooldown_timer -= delta
+
+	# --- attack animation lock timer ---
+	if is_attacking:
+		attack_anim_timer -= delta
+		if attack_anim_timer <= 0.0:
+			is_attacking = false
+			has_fired_this_attack = false
+
+	# --- hurt animation lock timer ---
+	if is_hurting:
+		hurt_anim_timer -= delta
+		if hurt_anim_timer <= 0.0:
+			is_hurting = false
 
 	# --- mana regen cooldown / tick ---
 	if mana_regen_cooldown > 0.0:
@@ -80,7 +113,7 @@ func _physics_process(delta: float) -> void:
 		jumps_left = max_jumps
 
 	# --- jump / double jump ---
-	if Input.is_action_just_pressed("move_jump") and jumps_left > 0:
+	if Input.is_action_just_pressed("move_jump") and jumps_left > 0 and not is_dead:
 		velocity.y = JUMP_VELOCITY
 		jumps_left -= 1
 		_play_jump_sound()
@@ -89,7 +122,7 @@ func _physics_process(delta: float) -> void:
 	var direction := Input.get_axis("move_Left", "move_Right")
 	var is_moving_horiz: bool = direction != 0.0
 
-	if is_moving_horiz:
+	if is_moving_horiz and not is_dead:
 		velocity.x = direction * SPEED
 		_update_facing(direction)
 	else:
@@ -98,10 +131,11 @@ func _physics_process(delta: float) -> void:
 	_handle_walk_sound(is_moving_horiz)
 
 	# --- attack input ---
-	if Input.is_action_just_pressed("attack"):
+	if Input.is_action_just_pressed("attack") and not is_dead:
 		try_attack()
 
 	move_and_slide()
+	_update_animation_state()
 
 
 func _update_facing(direction: float) -> void:
@@ -133,7 +167,7 @@ func _handle_walk_sound(is_moving_horiz: bool) -> void:
 		return
 
 	# footsteps only when moving on the ground
-	if is_moving_horiz and is_on_floor():
+	if is_moving_horiz and is_on_floor() and not is_dead:
 		if not walk_sound.playing:
 			walk_sound.play()
 	else:
@@ -141,7 +175,7 @@ func _handle_walk_sound(is_moving_horiz: bool) -> void:
 			walk_sound.stop()
 
 
-# ---------- ATTACK ----------
+# ---------- ATTACK & ANIMATION ----------
 
 func try_attack() -> void:
 	if attack_cooldown_timer > 0.0:
@@ -154,16 +188,23 @@ func try_attack() -> void:
 	if mana < mana_per_shot:
 		return
 
+	# Spend mana
 	mana -= mana_per_shot
 	if mana < 0:
 		mana = 0
 	emit_signal("mana_changed", mana, max_mana)
 
+	# Regen + cooldown
 	mana_regen_cooldown = mana_regen_delay
 	attack_cooldown_timer = attack_cooldown
 
+	# Animation + sound + timers
+	is_attacking = true
+	has_fired_this_attack = false
+	attack_anim_timer = max(attack_anim_duration, 0.01)  # avoid 0-length
+
 	_play_attack_sound()
-	shoot_projectile()
+	_play_anim("attack")
 
 
 func shoot_projectile() -> void:
@@ -187,9 +228,72 @@ func shoot_projectile() -> void:
 	get_tree().current_scene.add_child(projectile)
 
 
+# ---------- ANIMATION STATE MACHINE ----------
+
+func _update_animation_state() -> void:
+	if not is_instance_valid(sprite):
+		return
+
+	# Death overrides everything
+	if is_dead:
+		_play_anim("death")
+		return
+
+	# Hurt / attack are uninterruptible while their timers are running
+	if is_hurting:
+		_play_anim("hurt")
+		return
+
+	if is_attacking:
+		_play_anim("attack")
+		return
+
+	# Movement / jump / idle
+	if not is_on_floor():
+		_play_anim("jump")
+		return
+
+	# On the ground now
+	if abs(velocity.x) > 5.0:
+		_play_anim("walk")
+	else:
+		_play_anim("idle")
+
+
+func _play_anim(name: String) -> void:
+	if not is_instance_valid(sprite):
+		return
+	if sprite.animation != name:
+		sprite.play(name)
+
+
+# Called every time the frame changes
+func _on_anim_frame_changed() -> void:
+	if not is_instance_valid(sprite):
+		return
+
+	# Only care while attacking
+	if not is_attacking:
+		return
+
+	if sprite.animation != "attack":
+		return
+
+	if has_fired_this_attack:
+		return
+
+	# When attack reaches the chosen frame, spawn the projectile
+	if sprite.frame == attack_fire_frame:
+		shoot_projectile()
+		has_fired_this_attack = true
+
+
 # ---------- DAMAGE / MANA RESTORE ----------
 
 func take_damage(amount: int) -> void:
+	if is_dead:
+		return
+
 	_play_hit_sound()
 
 	health -= amount
@@ -198,7 +302,13 @@ func take_damage(amount: int) -> void:
 	emit_signal("health_changed", health, max_health)
 
 	if health == 0:
+		is_dead = true
+		_play_anim("death")
 		emit_signal("died")
+	else:
+		is_hurting = true
+		hurt_anim_timer = max(hurt_anim_duration, 0.01)
+		_play_anim("hurt")
 
 
 func restore_mana(amount: int) -> void:

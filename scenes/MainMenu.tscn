@@ -13,6 +13,7 @@ grow_vertical = 2
 script = ExtResource("1_yqorp")
 
 [node name="VBoxContainer" type="VBoxContainer" parent="."]
+visible = false
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
@@ -55,17 +56,21 @@ offset_right = 840.5
 offset_bottom = 489.5
 size_flags_vertical = 3
 size_flags_stretch_ratio = 0.0
-color = Color(0, 0, 0, 1)
+color = Color(0.29954746, 0.29954746, 0.29954743, 1)
 
-[node name="HSlider" type="HSlider" parent="ColorRect"]
+[node name="VoiceSlider" type="HSlider" parent="ColorRect"]
 layout_mode = 0
 offset_left = 13.0
 offset_top = 58.0
 offset_right = 322.0
 offset_bottom = 74.0
-step = 10.0
+min_value = 1.0
+max_value = 5.0
+value = 1.0
+tick_count = 10
+ticks_on_borders = true
 
-[node name="Label" type="Label" parent="ColorRect"]
+[node name="VoiceLabel" type="Label" parent="ColorRect"]
 layout_mode = 0
 offset_left = 15.0
 offset_top = 23.0
@@ -73,15 +78,19 @@ offset_right = 146.0
 offset_bottom = 47.0
 text = "Voices Options"
 
-[node name="HSlider2" type="HSlider" parent="ColorRect"]
+[node name="MeanSlider" type="HSlider" parent="ColorRect"]
 layout_mode = 0
 offset_left = 13.0
 offset_top = 154.0
 offset_right = 322.0
 offset_bottom = 170.0
-step = 10.0
+min_value = 1.0
+max_value = 5.0
+value = 1.0
+tick_count = 10
+ticks_on_borders = true
 
-[node name="Label2" type="Label" parent="ColorRect"]
+[node name="MeanLabel" type="Label" parent="ColorRect"]
 layout_mode = 0
 offset_left = 13.0
 offset_top = 119.0
@@ -100,4 +109,6 @@ text = "Exit"
 [connection signal="pressed" from="VBoxContainer/StartButton" to="." method="_on_start_button_pressed"]
 [connection signal="pressed" from="VBoxContainer/OptionsButton" to="." method="_on_options_button_pressed"]
 [connection signal="pressed" from="VBoxContainer/QuitButton" to="." method="_on_quit_button_pressed"]
+[connection signal="value_changed" from="ColorRect/VoiceSlider" to="." method="_on_voice_slider_value_changed"]
+[connection signal="value_changed" from="ColorRect/MeanSlider" to="." method="_on_mean_slider_value_changed"]
 [connection signal="pressed" from="ColorRect/ExitButton" to="." method="_on_exit_button_pressed"]

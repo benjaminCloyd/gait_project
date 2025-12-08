@@ -22,8 +22,9 @@ func _ready() -> void:
 		ttsApi.buffer_low.connect(_on_tts_buffer_low)
 	
 	# Initial load
-	await _preload_insults(5) 
-	print("✅ Gemini Initial Preload Complete")
+	#await _preload_insults(5) 
+	print("apiManager ready: No insults preloaded yet.")
+
 
 
 # Triggered when TTS says it is running out of audio
@@ -35,7 +36,11 @@ func _on_tts_buffer_low():
 
 func _preload_insults(count: int) -> void:
 	is_loading = true
-	var prompt = "Give me exactly " + str(count) + " short, evil boss insults for when they attack the player. Separate each insult with the unique delimiter: " + DELIMITER
+	var prompt = "You ar a boss in a video that insults the player when you hit them. Give me exactly %d short one sentence insults with meanness level %d out of 5. Each insult must be separated by %s." % [
+	count,
+	GameSettings.mean_level,
+	DELIMITER
+]
 
 	var raw_response = await ask_gemini(prompt)
 

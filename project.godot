@@ -19,6 +19,7 @@ config/icon="res://icon.svg"
 
 APIManager="*res://scripts/APIManager.gd"
 ttsApi="*res://scripts/ttsAPI.gd"
+GameSettings="*res://scripts/game_settings.gd"
 
 [input]
 

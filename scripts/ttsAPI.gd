@@ -71,10 +71,17 @@ func _generate_audio_stream(text_to_speak: String) -> AudioStreamMP3:
 	var final_url = tts_url + "?key=" + api_key
 	var headers = ["Content-Type: application/json"]
 
+	var selected_voice = GameSettings.voice_map[GameSettings.voice_level]
+
 	var body = JSON.stringify({
 		"input": { "text": text_to_speak },
-		"voice": { "languageCode": language_code, "name": voice_name },
-		"audioConfig": { "audioEncoding": "MP3" }
+		"voice": {
+			"languageCode": language_code,
+			"name": selected_voice
+		},
+		"audioConfig": {
+			"audioEncoding": "MP3"
+		}
 	})
 	
 	var err = new_request.request(final_url, headers, HTTPClient.METHOD_POST, body)

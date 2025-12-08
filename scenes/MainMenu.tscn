@@ -1,7 +1,7 @@
 [gd_scene load_steps=3 format=3 uid="uid://drpoutg47bt3x"]
 
 [ext_resource type="Script" uid="uid://ct80pr1p738c5" path="res://scenes/main_menu.gd" id="1_yqorp"]
-[ext_resource type="Texture2D" uid="uid://bgmheq1qlrnvm" path="res://sprites/GAITProject_TitleScreen.png" id="2_0ykhv"]
+[ext_resource type="Texture2D" uid="uid://bgmheq1qlrnvm" path="res://Sprites/GAITProject_TitleScreen.png" id="2_0ykhv"]
 
 [node name="Menu" type="Control"]
 layout_mode = 3
